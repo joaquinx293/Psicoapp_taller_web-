@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}Eliminar pregunta{% endblock %}
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-danger">
+      <div class="card-body p-4 text-center">
+        <h4 class="text-danger mb-3">Eliminar pregunta</h4>
+        <p class="mb-1">¿Estas seguro de que quieres eliminar esta pregunta?</p>
+        <p class="fw-bold mb-1">"{{ pregunta.texto }}"</p>
+        <p class="text-muted small mb-4">Esta accion es permanente y no se puede deshacer.</p>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger me-2">Si, eliminar</button>
+          <a href="{% url 'cuestionarios:detalle' cuestionario.pk %}" class="btn btn-outline-secondary">
+            Cancelar
+          </a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

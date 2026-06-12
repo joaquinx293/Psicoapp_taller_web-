@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio - Especialista{% endblock %}
+{% block contenido %}
+<h2 class="mb-4">Bienvenido, {{ user.first_name }}</h2>
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body text-center">
+        <h5 class="card-title">Mis cuestionarios</h5>
+        <p class="text-muted">Crear y gestionar cuestionarios</p>
+        <a href="{% url 'cuestionarios:listado' %}" class="btn btn-danger">Ver cuestionarios</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body text-center">
+        <h5 class="card-title">Mis pacientes</h5>
+        <p class="text-muted">Ver y gestionar tus pacientes</p>
+        <a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="btn btn-danger">Ver pacientes</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body text-center">
+        <h5 class="card-title">Invitar paciente</h5>
+        <p class="text-muted">Enviar invitacion por correo</p>
+        <a href="{% url 'gestion_usuarios:invitar_paciente' %}" class="btn btn-danger">Invitar</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

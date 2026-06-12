@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block titulo %}Activar cuenta{% endblock %}
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="mb-1">Activar tu cuenta</h4>
+        <p class="text-muted">Hola {{ invitacion.nombre_paciente }}, define tu acceso.</p>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Nombre de usuario</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+              <div class="text-danger small">{{ form.username.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Contrasena</label>
+            {{ form.password1 }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Confirmar contrasena</label>
+            {{ form.password2 }}
+          </div>
+          {% if terminos %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Terminos y Condiciones</label>
+            <div class="border rounded p-2 bg-light" style="max-height:150px; overflow-y:auto; font-size:0.85rem;">
+              {{ terminos.contenido|linebreaks }}
+            </div>
+          </div>
+          {% endif %}
+          <div class="form-check mb-3">
+            {{ form.acepta_terminos }}
+            <label class="form-check-label" for="{{ form.acepta_terminos.id_for_label }}">
+              Acepto los terminos y condiciones
+            </label>
+          </div>
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors|join:", " }}</div>
+          {% endif %}
+          <button type="submit" class="btn btn-danger w-100" id="btnActivar">Activar cuenta</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const chk = document.getElementById("{{ form.acepta_terminos.id_for_label }}");
+  const btn = document.getElementById("btnActivar");
+  btn.disabled = !chk.checked;
+  chk.addEventListener("change", () => { btn.disabled = !chk.checked; });
+</script>
+{% endblock %}

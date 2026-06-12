@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Asignar cuestionarios{% endblock %}
+{% block contenido %}
+
+<a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="text-muted small">&larr; Volver a mis pacientes</a>
+
+<h3 class="mt-2 mb-1">Cuestionarios para {{ paciente.first_name|default:paciente.username }}</h3>
+<p class="text-muted mb-4">Selecciona los cuestionarios que quieres que este paciente pueda responder.</p>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="row g-3 mb-4">
+    {% for c in cuestionarios_disponibles %}
+    <div class="col-md-6">
+      <div class="card shadow-sm {% if c.pk in asignados_ids %}border-danger{% endif %}">
+        <div class="card-body d-flex align-items-start gap-3">
+          <input class="form-check-input mt-1 flex-shrink-0" type="checkbox"
+                 name="cuestionarios" value="{{ c.pk }}" id="c{{ c.pk }}"
+                 {% if c.pk in asignados_ids %}checked{% endif %}>
+          <label class="form-check-label w-100" for="c{{ c.pk }}" style="cursor:pointer">
+            <div class="d-flex justify-content-between">
+              <span class="fw-semibold">{{ c.nombre }}</span>
+              {% if c.estado == 'aprobado' %}
+                <span class="badge bg-success">Aprobado</span>
+              {% else %}
+                <span class="badge bg-secondary">Borrador</span>
+              {% endif %}
+            </div>
+            <p class="text-muted small mb-0 mt-1">
+              {{ c.descripcion|default:"Sin descripcion" }} &middot; {{ c.cantidad_preguntas_activas }} pregunta(s)
+            </p>
+          </label>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="alert alert-info">No tienes cuestionarios disponibles para asignar.</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <button type="submit" class="btn btn-danger">Guardar asignacion</button>
+  <a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="btn btn-link">Cancelar</a>
+</form>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Invitar paciente{% endblock %}
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="mb-3">Invitar a un paciente</h4>
+        <p class="text-muted">Se enviara un correo con un enlace de activacion.</p>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Nombre del paciente</label>
+            {{ form.nombre_paciente }}
+            {% if form.nombre_paciente.errors %}
+              <div class="text-danger small">{{ form.nombre_paciente.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Correo electronico</label>
+            {{ form.correo_paciente }}
+            {% if form.correo_paciente.errors %}
+              <div class="text-danger small">{{ form.correo_paciente.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <button type="submit" class="btn btn-danger">Enviar invitacion</button>
+          <a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="btn btn-link">Volver</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

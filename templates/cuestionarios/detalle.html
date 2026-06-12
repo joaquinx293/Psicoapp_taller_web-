@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block titulo %}{{ cuestionario.nombre }}{% endblock %}
+
+{% block contenido %}
+<a href="{% url 'cuestionarios:listado' %}" class="text-muted small">&larr; Volver a mis cuestionarios</a>
+
+<div class="d-flex justify-content-between align-items-center mt-2 mb-1">
+  <h2 class="mb-0">{{ cuestionario.nombre }}</h2>
+  <div class="d-flex gap-2 align-items-center">
+    {% if cuestionario.estado == 'borrador' %}
+      <span class="badge bg-secondary">Borrador</span>
+    {% elif cuestionario.estado == 'en_revision' %}
+      <span class="badge bg-warning text-dark">En revision</span>
+    {% elif cuestionario.estado == 'aprobado' %}
+      <span class="badge bg-success">Aprobado</span>
+    {% elif cuestionario.estado == 'rechazado' %}
+      <span class="badge bg-danger">Rechazado</span>
+    {% endif %}
+
+    {% if cuestionario.puede_enviar_revision %}
+      <form method="post" action="{% url 'cuestionarios:enviar_revision' cuestionario.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-warning"
+          {% if preguntas|length == 0 %}disabled title="Agrega al menos una pregunta"{% endif %}>
+          Enviar a revision
+        </button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if cuestionario.estado == 'rechazado' %}
+<div class="alert alert-danger mt-2">
+  Este cuestionario fue rechazado. Corrige las preguntas y vuelvelo a enviar.
+</div>
+{% elif cuestionario.estado == 'en_revision' %}
+<div class="alert alert-warning mt-2">
+  Este cuestionario esta en revision. No puedes editarlo hasta que el administrador lo revise.
+</div>
+{% endif %}
+
+<p class="text-muted mt-1">{{ cuestionario.descripcion }}</p>
+
+<div class="row mt-3">
+  <!-- Lista de preguntas -->
+  <div class="{% if cuestionario.estado == 'borrador' or cuestionario.estado == 'rechazado' %}col-md-7{% else %}col-12{% endif %}">
+    <h5>Preguntas ({{ preguntas|length }})</h5>
+    {% if preguntas %}
+    <ul class="list-group">
+      {% for p in preguntas %}
+      <li class="list-group-item">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <span class="fw-bold">{{ forloop.counter }}.</span> {{ p.texto }}
+            <div class="mt-1">
+              <span class="badge bg-light text-dark border">{{ p.get_escala_display }}</span>
+              <span class="badge bg-light text-dark border ms-1">peso: {{ p.peso }}</span>
+            </div>
+          </div>
+          {% if cuestionario.estado == 'borrador' or cuestionario.estado == 'rechazado' %}
+          <div class="d-flex gap-1 ms-2">
+            <a href="{% url 'cuestionarios:editar_pregunta' p.pk %}"
+               class="btn btn-sm btn-outline-secondary">Editar</a>
+            <a href="{% url 'cuestionarios:eliminar_pregunta' p.pk %}"
+               class="btn btn-sm btn-outline-danger">Eliminar</a>
+          </div>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="alert alert-info">Aun no hay preguntas. Agrega la primera.</div>
+    {% endif %}
+  </div>
+
+  <!-- Formulario agregar pregunta + importar -->
+  {% if cuestionario.estado == 'borrador' or cuestionario.estado == 'rechazado' %}
+  <div class="col-md-5">
+    <!-- Agregar pregunta nueva -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h6 class="mb-3">Agregar pregunta</h6>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Texto de la pregunta</label>
+            {{ form.texto }}
+            {% if form.texto.errors %}
+              <div class="text-danger small">{{ form.texto.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tipo de respuesta</label>
+            {{ form.escala }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Peso (1 a 10)</label>
+            {{ form.peso }}
+          </div>
+          <button type="submit" class="btn btn-danger w-100">Agregar pregunta</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Importar pregunta de otro cuestionario -->
+    {% if preguntas_importables %}
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="mb-3">Importar pregunta</h6>
+        <p class="text-muted small mb-3">Copia una pregunta de otro cuestionario tuyo.</p>
+        <form method="post" action="{% url 'cuestionarios:importar_pregunta' cuestionario.pk %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <select name="pregunta_id" class="form-select form-select-sm" required>
+              <option value="">— Selecciona una pregunta —</option>
+              {% for p in preguntas_importables %}
+              <option value="{{ p.pk }}">
+                [{{ p.cuestionario.nombre|truncatechars:20 }}] {{ p.texto|truncatechars:50 }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-outline-secondary w-100 btn-sm">Importar copia</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

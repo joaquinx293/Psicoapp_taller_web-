@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titulo %}Mis cuestionarios{% endblock %}
+{% block contenido %}
+
+<h2 class="mb-4">Mis cuestionarios</h2>
+
+{% if asignaciones %}
+<div class="row g-3">
+  {% for asig in asignaciones %}
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">{{ asig.cuestionario.nombre }}</h5>
+        <p class="text-muted small mb-2">{{ asig.cuestionario.descripcion|default:"" }}</p>
+        <p class="small mb-3">{{ asig.cuestionario.cantidad_preguntas_activas }} pregunta(s)</p>
+
+        {% if asig.cuestionario.pk in respondidos_ids %}
+          <span class="badge bg-success me-2">Ya respondido</span>
+          <a href="{% url 'cuestionarios:responder_cuestionario' asig.cuestionario.pk %}"
+             class="btn btn-sm btn-outline-secondary">Responder de nuevo</a>
+        {% else %}
+          <a href="{% url 'cuestionarios:responder_cuestionario' asig.cuestionario.pk %}"
+             class="btn btn-sm btn-danger">Responder</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+  Tu especialista aun no te ha asignado cuestionarios.
+</div>
+{% endif %}
+
+{% endblock %}

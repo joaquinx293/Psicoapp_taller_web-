@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Activar cuenta - PsicoApp{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+
+        <h4 class="mb-1">Fui invitado</h4>
+        <p class="text-muted mb-4">
+          Ingresa tu correo y el codigo de 6 digitos que recibiste para activar tu cuenta.
+        </p>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label">Correo electronico</label>
+            {{ form.correo }}
+            {% if form.correo.errors %}
+              <div class="text-danger small">{{ form.correo.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Codigo de activacion</label>
+            {{ form.pin }}
+            <div class="form-text">El codigo tiene 6 digitos y es valido por 24 horas.</div>
+            {% if form.pin.errors %}
+              <div class="text-danger small">{{ form.pin.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors|join:", " }}</div>
+          {% endif %}
+
+          <button type="submit" class="btn btn-danger w-100">Verificar codigo</button>
+        </form>
+
+        <hr class="my-3">
+        <p class="text-center text-muted small mb-0">
+          ¿Ya tienes cuenta?
+          <a href="{% url 'cuentas:login' %}">Iniciar sesion</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

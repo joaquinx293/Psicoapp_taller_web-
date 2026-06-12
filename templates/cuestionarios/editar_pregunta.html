@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Editar pregunta{% endblock %}
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="mb-3">Editar pregunta</h4>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Texto de la pregunta</label>
+            {{ form.texto }}
+            {% if form.texto.errors %}
+              <div class="text-danger small">{{ form.texto.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tipo de respuesta</label>
+            {{ form.escala }}
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Peso (1 a 10)</label>
+            {{ form.peso }}
+          </div>
+          <button type="submit" class="btn btn-danger">Guardar cambios</button>
+          <a href="{% url 'cuestionarios:detalle' pregunta.cuestionario.pk %}" class="btn btn-link">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

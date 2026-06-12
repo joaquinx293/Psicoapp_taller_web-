@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block titulo %}Registro de Especialista - PsicoApp{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+
+        <h3 class="mb-1">Solicitud de registro como especialista</h3>
+        <p class="text-muted mb-4">
+          Tu solicitud sera revisada por el administrador antes de activarse.
+        </p>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Nombre de usuario *</label>
+              {{ form.username }}
+              {% if form.username.errors %}
+                <div class="text-danger small">{{ form.username.errors|join:", " }}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Correo electronico *</label>
+              {{ form.email }}
+              {% if form.email.errors %}
+                <div class="text-danger small">{{ form.email.errors|join:", " }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Nombre *</label>
+              {{ form.first_name }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Apellido *</label>
+              {{ form.last_name }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Especialidad *</label>
+            {{ form.especialidad }}
+            {% if form.especialidad.errors %}
+              <div class="text-danger small">{{ form.especialidad.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Contrasena *</label>
+              {{ form.password1 }}
+              <div class="form-text">Minimo 8 caracteres, una mayuscula y un numero.</div>
+              {% if form.password1.errors %}
+                <div class="text-danger small">{{ form.password1.errors|join:", " }}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Confirmar contrasena *</label>
+              {{ form.password2 }}
+              {% if form.password2.errors %}
+                <div class="text-danger small">{{ form.password2.errors|join:", " }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if terminos %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">
+              Terminos y Condiciones (version {{ terminos.version }})
+            </label>
+            <div class="border rounded p-3 bg-light"
+                 style="max-height: 180px; overflow-y: auto; font-size: 0.9rem;">
+              {{ terminos.contenido|linebreaks }}
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="form-check mb-4">
+            {{ form.acepta_terminos }}
+            <label class="form-check-label" for="{{ form.acepta_terminos.id_for_label }}">
+              He leido y acepto los terminos y condiciones
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-danger" id="btnEnviar">
+            Enviar solicitud
+          </button>
+          <a href="{% url 'cuentas:login' %}" class="btn btn-link">
+            Ya tengo cuenta
+          </a>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const checkbox = document.getElementById("{{ form.acepta_terminos.id_for_label }}");
+  const boton = document.getElementById("btnEnviar");
+  boton.disabled = !checkbox.checked;
+  checkbox.addEventListener("change", () => { boton.disabled = !checkbox.checked; });
+</script>
+{% endblock %}
