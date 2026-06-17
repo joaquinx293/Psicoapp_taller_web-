@@ -27,7 +27,7 @@
               {% endif %}
             </div>
             <p class="text-muted small mb-0 mt-1">
-              {{ c.descripcion|default:"Sin descripcion" }} &middot; {{ c.cantidad_preguntas_activas }} pregunta(s)
+              {{ c.descripcion|default:"Sin descripción" }} &middot; {{ c.cantidad_preguntas_activas }} pregunta(s)
             </p>
           </label>
         </div>
@@ -40,7 +40,7 @@
     {% endfor %}
   </div>
 
-  <button type="submit" class="btn btn-danger">Guardar asignacion</button>
+  <button type="submit" class="btn btn-danger">Guardar asignación</button>
   <a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="btn btn-link">Cancelar</a>
 </form>
 {% endblock %}

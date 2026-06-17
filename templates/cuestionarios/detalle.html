@@ -10,7 +10,7 @@
     {% if cuestionario.estado == 'borrador' %}
       <span class="badge bg-secondary">Borrador</span>
     {% elif cuestionario.estado == 'en_revision' %}
-      <span class="badge bg-warning text-dark">En revision</span>
+      <span class="badge bg-warning text-dark">En revisión</span>
     {% elif cuestionario.estado == 'aprobado' %}
       <span class="badge bg-success">Aprobado</span>
     {% elif cuestionario.estado == 'rechazado' %}
@@ -22,7 +22,7 @@
         {% csrf_token %}
         <button type="submit" class="btn btn-sm btn-warning"
           {% if preguntas|length == 0 %}disabled title="Agrega al menos una pregunta"{% endif %}>
-          Enviar a revision
+          Enviar a revisión
         </button>
       </form>
     {% endif %}
@@ -31,11 +31,11 @@
 
 {% if cuestionario.estado == 'rechazado' %}
 <div class="alert alert-danger mt-2">
-  Este cuestionario fue rechazado. Corrige las preguntas y vuelvelo a enviar.
+  Este cuestionario fue rechazado. Corrige las preguntas y vuélvelo a enviar.
 </div>
 {% elif cuestionario.estado == 'en_revision' %}
 <div class="alert alert-warning mt-2">
-  Este cuestionario esta en revision. No puedes editarlo hasta que el administrador lo revise.
+  Este cuestionario está en revisión. No puedes editarlo hasta que el administrador lo revise.
 </div>
 {% endif %}
 
@@ -70,7 +70,7 @@
       {% endfor %}
     </ul>
     {% else %}
-    <div class="alert alert-info">Aun no hay preguntas. Agrega la primera.</div>
+    <div class="alert alert-info">Aún no hay preguntas. Agrega la primera.</div>
     {% endif %}
   </div>
 

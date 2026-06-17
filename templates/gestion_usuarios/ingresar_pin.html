@@ -9,14 +9,14 @@
 
         <h4 class="mb-1">Fui invitado</h4>
         <p class="text-muted mb-4">
-          Ingresa tu correo y el codigo de 6 digitos que recibiste para activar tu cuenta.
+          Ingresa tu correo y el código de 6 dígitos que recibiste para activar tu cuenta.
         </p>
 
         <form method="post" novalidate>
           {% csrf_token %}
 
           <div class="mb-3">
-            <label class="form-label">Correo electronico</label>
+            <label class="form-label">Correo electrónico</label>
             {{ form.correo }}
             {% if form.correo.errors %}
               <div class="text-danger small">{{ form.correo.errors|join:", " }}</div>
@@ -24,9 +24,9 @@
           </div>
 
           <div class="mb-4">
-            <label class="form-label">Codigo de activacion</label>
+            <label class="form-label">Código de activación</label>
             {{ form.pin }}
-            <div class="form-text">El codigo tiene 6 digitos y es valido por 24 horas.</div>
+            <div class="form-text">El código tiene 6 dígitos y es válido por 24 horas.</div>
             {% if form.pin.errors %}
               <div class="text-danger small">{{ form.pin.errors|join:", " }}</div>
             {% endif %}
@@ -36,13 +36,13 @@
             <div class="alert alert-danger">{{ form.non_field_errors|join:", " }}</div>
           {% endif %}
 
-          <button type="submit" class="btn btn-danger w-100">Verificar codigo</button>
+          <button type="submit" class="btn btn-danger w-100">Verificar código</button>
         </form>
 
         <hr class="my-3">
         <p class="text-center text-muted small mb-0">
           ¿Ya tienes cuenta?
-          <a href="{% url 'cuentas:login' %}">Iniciar sesion</a>
+          <a href="{% url 'cuentas:login' %}">Iniciar sesión</a>
         </p>
       </div>
     </div>

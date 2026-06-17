@@ -12,6 +12,7 @@ OPCIONES_ESCALA = {
     'likert4': [(0, 'Nunca'), (1, 'Raramente'), (2, 'A veces'), (3, 'Siempre')],
     'likert5': [(0, 'Nunca'), (1, 'Casi nunca'), (2, 'A veces'), (3, 'Frecuentemente'), (4, 'Casi siempre')],
     'sino':    [(1, 'Sí'), (0, 'No')],
+    'gad7':   [(0, 'Nunca'), (1, 'Varios días'), (2, 'La mitad de los días'), (3, 'Casi cada día')],
 }
 
 
@@ -28,7 +29,7 @@ def responder_cuestionario(request, pk):
         cuestionario=cuestionario,
         activa=True
     ).exists():
-        messages.error(request, 'Este cuestionario no esta disponible para ti.')
+        messages.error(request, 'Este cuestionario no está disponible para ti.')
         return redirect('cuestionarios:mis_cuestionarios_paciente')
 
     preguntas = cuestionario.preguntas.filter(activa=True)
@@ -57,11 +58,7 @@ def responder_cuestionario(request, pk):
                     pregunta=pregunta,
                     valor=respuestas_validas[pregunta.pk],
                 )
-            messages.success(
-                request,
-                f'Respuestas guardadas. Puntaje: {respuesta.puntaje_total()}'
-            )
-            return redirect('cuestionarios:mis_cuestionarios_paciente')
+            return redirect('cuestionarios:resultado_cuestionario', respuesta_pk=respuesta.pk)
 
     # Preparar preguntas con sus opciones de respuesta
     preguntas_con_opciones = [

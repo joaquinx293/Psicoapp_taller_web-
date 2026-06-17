@@ -5,11 +5,11 @@ from django import forms
 class IngresarPinForm(forms.Form):
 
     correo = forms.EmailField(
-        label='Tu correo electronico',
+        label='Tu correo electrónico',
         widget=forms.EmailInput(attrs={'class': 'form-control'})
     )
     pin = forms.CharField(
-        label='Codigo de activacion (6 digitos)',
+        label='Código de activación (6 dígitos)',
         max_length=6,
         min_length=6,
         widget=forms.TextInput(attrs={
@@ -22,5 +22,5 @@ class IngresarPinForm(forms.Form):
     def clean_pin(self):
         pin = self.cleaned_data.get('pin', '')
         if not pin.isdigit():
-            raise forms.ValidationError('El codigo debe contener solo numeros.')
+            raise forms.ValidationError('El código debe contener solo números.')
         return pin

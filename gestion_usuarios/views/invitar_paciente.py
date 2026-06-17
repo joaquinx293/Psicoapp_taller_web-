@@ -21,15 +21,15 @@ def invitar_paciente(request):
             invitacion.save()  # el PIN se genera automáticamente en save()
 
             send_mail(
-                'Invitacion a PsicoApp',
+                'Invitación a PsicoApp',
                 f'Hola {invitacion.nombre_paciente},\n\n'
                 f'{request.user.get_full_name() or request.user.username} '
                 f'te ha invitado a PsicoApp.\n\n'
-                f'Tu codigo de activacion es:\n\n'
+                f'Tu código de activación es:\n\n'
                 f'    {invitacion.pin}\n\n'
-                f'Ingresa a PsicoApp, ve a la seccion "Fui invitado" '
-                f'e introduce tu correo y este codigo.\n\n'
-                f'Este codigo es valido por 24 horas.\n\n'
+                f'Ingresa a PsicoApp, ve a la sección "Fui invitado" '
+                f'e introduce tu correo y este código.\n\n'
+                f'Este código es válido por 24 horas.\n\n'
                 f'Saludos, equipo PsicoApp.',
                 'noreply@psicoapp.cl',
                 [invitacion.correo_paciente],
@@ -38,8 +38,8 @@ def invitar_paciente(request):
 
             messages.success(
                 request,
-                f'Invitacion enviada a {invitacion.correo_paciente}. '
-                f'PIN de activacion: {invitacion.pin}'
+                f'Invitación enviada a {invitacion.correo_paciente}. '
+                f'PIN de activación: {invitacion.pin}'
             )
             return redirect('gestion_usuarios:listado_pacientes')
     else:

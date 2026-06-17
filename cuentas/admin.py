@@ -31,7 +31,7 @@ class UsuarioAdmin(UserAdmin):
     actions = ['aprobar_especialistas', 'rechazar_especialistas']
 
     fieldsets = UserAdmin.fieldsets + (
-        ('Informacion PsicoApp', {
+        ('Información PsicoApp', {
             'fields': ('rol', 'estado', 'especialidad',
                        'fecha_nacimiento', 'motivo_rechazo',
                        'terminos_aceptados_fecha')
@@ -51,7 +51,7 @@ class UsuarioAdmin(UserAdmin):
             send_mail(
                 'Tu cuenta fue aprobada - PsicoApp',
                 f'Hola {usuario.first_name}, tu solicitud fue aprobada. '
-                f'Ya puedes iniciar sesion en PsicoApp.',
+                f'Ya puedes iniciar sesión en PsicoApp.',
                 'noreply@psicoapp.cl',
                 [usuario.email],
                 fail_silently=True,

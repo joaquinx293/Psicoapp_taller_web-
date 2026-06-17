@@ -20,7 +20,7 @@ class RegistroEspecialistaForm(UserCreationForm):
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     email = forms.EmailField(
-        label='Correo electronico',
+        label='Correo electrónico',
         widget=forms.EmailInput(attrs={'class': 'form-control'})
     )
     especialidad = forms.ModelChoiceField(
@@ -31,7 +31,7 @@ class RegistroEspecialistaForm(UserCreationForm):
     )
     # HU-002: aceptación de términos y condiciones
     acepta_terminos = forms.BooleanField(
-        label='Acepto los terminos y condiciones',
+        label='Acepto los términos y condiciones',
         required=True
     )
 
@@ -53,7 +53,7 @@ class RegistroEspecialistaForm(UserCreationForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if Usuario.objects.filter(email=email).exists():
-            raise ValidationError('Este correo ya esta registrado.')
+            raise ValidationError('Este correo ya está registrado.')
         return email
 
     def save(self, commit=True):

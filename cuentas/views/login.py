@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 @login_required
 def redireccion_por_rol(request):
     if request.user.es_admin() or request.user.is_superuser:
-        return redirect('/admin/')
+        return redirect('cuentas:dashboard_admin')
     elif request.user.es_especialista():
         return redirect('gestion_usuarios:dashboard')
     else:

@@ -17,16 +17,16 @@
             {% endif %}
           </div>
           <div class="mb-3">
-            <label class="form-label">Contrasena</label>
+            <label class="form-label">Contraseña</label>
             {{ form.password1 }}
           </div>
           <div class="mb-3">
-            <label class="form-label">Confirmar contrasena</label>
+            <label class="form-label">Confirmar contraseña</label>
             {{ form.password2 }}
           </div>
           {% if terminos %}
           <div class="mb-3">
-            <label class="form-label fw-bold">Terminos y Condiciones</label>
+            <label class="form-label fw-bold">Términos y Condiciones</label>
             <div class="border rounded p-2 bg-light" style="max-height:150px; overflow-y:auto; font-size:0.85rem;">
               {{ terminos.contenido|linebreaks }}
             </div>
@@ -35,7 +35,7 @@
           <div class="form-check mb-3">
             {{ form.acepta_terminos }}
             <label class="form-check-label" for="{{ form.acepta_terminos.id_for_label }}">
-              Acepto los terminos y condiciones
+              Acepto los términos y condiciones
             </label>
           </div>
           {% if form.non_field_errors %}

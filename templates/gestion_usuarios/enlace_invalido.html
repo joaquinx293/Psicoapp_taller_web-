@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block titulo %}Enlace invalido{% endblock %}
+{% block titulo %}Enlace inválido{% endblock %}
 {% block contenido %}
 <div class="row justify-content-center mt-5">
   <div class="col-md-6">
     <div class="alert alert-warning text-center">
-      <h4>Enlace invalido o expirado</h4>
-      <p>Este enlace de invitacion ya fue usado o caduco. Pide a tu especialista que te envie uno nuevo.</p>
+      <h4>Enlace inválido o expirado</h4>
+      <p>Este enlace de invitación ya fue usado o caducó. Pide a tu especialista que te envíe uno nuevo.</p>
       <a href="{% url 'cuentas:login' %}" class="btn btn-danger">Ir al login</a>
     </div>
   </div>

@@ -16,7 +16,7 @@ class InvitarPacienteForm(forms.ModelForm):
         }
         labels = {
             'nombre_paciente': 'Nombre del paciente',
-            'correo_paciente': 'Correo electronico',
+            'correo_paciente': 'Correo electrónico',
         }
 
     def clean_correo_paciente(self):

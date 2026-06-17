@@ -15,13 +15,11 @@ class InvitacionPaciente(models.Model):
     PENDIENTE = 'pendiente'
     ACEPTADA = 'aceptada'
     EXPIRADA = 'expirada'
-
     ESTADOS = [
         (PENDIENTE, 'Pendiente'),
         (ACEPTADA, 'Aceptada'),
         (EXPIRADA, 'Expirada'),
     ]
-
     especialista = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -29,23 +27,17 @@ class InvitacionPaciente(models.Model):
     )
     nombre_paciente = models.CharField(max_length=150)
     correo_paciente = models.EmailField()
-
-    # PIN de 6 dígitos, válido por 24 horas
     pin = models.CharField(max_length=6, editable=False, default=generar_pin)
-
     estado = models.CharField(max_length=20, choices=ESTADOS, default=PENDIENTE)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-
     paciente = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True, blank=True,
         related_name='invitacion_recibida'
     )
-
     def esta_vigente(self):
         limite = self.fecha_creacion + timedelta(hours=24)
         return self.estado == self.PENDIENTE and timezone.now() <= limite
-
     def __str__(self):
-        return f"Invitacion a {self.correo_paciente} ({self.estado})"
+        return f"Invitación a {self.correo_paciente} ({self.estado})"

@@ -6,7 +6,15 @@
 <!-- Mis cuestionarios -->
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="mb-0">Mis cuestionarios</h2>
-  <a href="{% url 'cuestionarios:crear' %}" class="btn btn-danger">+ Crear cuestionario</a>
+  <div class="d-flex gap-2">
+    <form method="post" action="{% url 'cuestionarios:crear_gad7' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-danger">
+        📋 Crear GAD-7
+      </button>
+    </form>
+    <a href="{% url 'cuestionarios:crear' %}" class="btn btn-danger">+ Crear cuestionario</a>
+  </div>
 </div>
 
 {% if mis_cuestionarios %}
@@ -20,14 +28,14 @@
           {% if c.estado == 'borrador' %}
             <span class="badge bg-secondary">Borrador</span>
           {% elif c.estado == 'en_revision' %}
-            <span class="badge bg-warning text-dark">En revision</span>
+            <span class="badge bg-warning text-dark">En revisión</span>
           {% elif c.estado == 'aprobado' %}
             <span class="badge bg-success">Aprobado</span>
           {% elif c.estado == 'rechazado' %}
             <span class="badge bg-danger">Rechazado</span>
           {% endif %}
         </div>
-        <p class="text-muted small mb-1">{{ c.descripcion|default:"Sin descripcion" }}</p>
+        <p class="text-muted small mb-1">{{ c.descripcion|default:"Sin descripción" }}</p>
         <p class="small mb-3">{{ c.cantidad_preguntas_activas }} pregunta(s)</p>
         <a href="{% url 'cuestionarios:detalle' c.pk %}" class="btn btn-sm btn-outline-danger">
           Ver / Editar
@@ -37,7 +45,7 @@
             {% csrf_token %}
             <button type="submit" class="btn btn-sm btn-outline-warning"
               {% if c.cantidad_preguntas_activas == 0 %}disabled title="Agrega al menos una pregunta"{% endif %}>
-              Enviar a revision
+              Enviar a revisión
             </button>
           </form>
         {% endif %}
@@ -48,7 +56,7 @@
 </div>
 {% else %}
 <div class="alert alert-info mb-5">
-  Aun no has creado cuestionarios.
+  Aún no has creado cuestionarios.
   <a href="{% url 'cuestionarios:crear' %}">Crea el primero</a>.
 </div>
 {% endif %}
@@ -66,7 +74,7 @@
           <h5 class="card-title mb-0">{{ c.nombre }}</h5>
           <span class="badge bg-success">Aprobado</span>
         </div>
-        <p class="text-muted small mb-1">{{ c.descripcion|default:"Sin descripcion" }}</p>
+        <p class="text-muted small mb-1">{{ c.descripcion|default:"Sin descripción" }}</p>
         <p class="small mb-0">{{ c.cantidad_preguntas_activas }} pregunta(s) &middot;
           <span class="text-muted">por {{ c.especialista.get_full_name|default:c.especialista.username }}</span>
         </p>
