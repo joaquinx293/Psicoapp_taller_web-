@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block titulo %}Términos y Condiciones — PsicoApp{% endblock %}
+
+{% block contenido %}
+<style>
+  .section-title { border-bottom: 2px solid #C0392B; padding-bottom: 6px; color: #922B21; }
+  .table thead   { background-color: #C0392B; color: white; }
+  .badge-vigente { background-color: #C0392B; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-bold mb-0">Términos y Condiciones</h2>
+  <a href="{% url 'cuentas:dashboard_admin' %}" class="btn btn-outline-danger">
+    ← Volver al panel
+  </a>
+</div>
+
+<!-- Versión vigente -->
+<h5 class="section-title mb-3">Versión vigente</h5>
+{% if vigente %}
+<div class="card shadow-sm mb-5">
+  <div class="card-header d-flex justify-content-between align-items-center"
+       style="background-color:#C0392B; color:white;">
+    <span>Versión {{ vigente.version }}</span>
+    <small>Publicado el {{ vigente.fecha_publicacion|date:"d/m/Y H:i" }}
+      por {{ vigente.autor.get_full_name|default:vigente.autor.username }}</small>
+  </div>
+  <div class="card-body">
+    <pre class="mb-0" style="white-space:pre-wrap; font-family:inherit;">{{ vigente.contenido }}</pre>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-light border mb-4">No hay términos y condiciones publicados aún.</div>
+{% endif %}
+
+<!-- Publicar nueva versión -->
+<h5 class="section-title mb-3">Publicar nueva versión</h5>
+<div class="card shadow-sm mb-5">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Contenido</label>
+        <textarea name="contenido" class="form-control" rows="8"
+                  placeholder="Escribe aquí los nuevos términos y condiciones..."
+                  required>{% if vigente %}{{ vigente.contenido }}{% endif %}</textarea>
+        <small class="text-muted">Al publicar, la versión anterior quedará desactivada.</small>
+      </div>
+      <button type="submit" class="btn btn-danger">Publicar nueva versión</button>
+    </form>
+  </div>
+</div>
+
+<!-- Historial -->
+{% if historial %}
+<h5 class="section-title mb-3">Historial de versiones</h5>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Versión</th>
+          <th>Fecha de publicación</th>
+          <th>Autor</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in historial %}
+        <tr>
+          <td class="align-middle">v{{ t.version }}</td>
+          <td class="align-middle">{{ t.fecha_publicacion|date:"d/m/Y H:i" }}</td>
+          <td class="align-middle">{{ t.autor.get_full_name|default:t.autor.username|default:"—" }}</td>
+          <td class="align-middle">
+            {% if t.vigente %}
+              <span class="badge badge-vigente">Vigente</span>
+            {% else %}
+              <span class="text-muted">Antigua</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

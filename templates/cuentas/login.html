@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block titulo %}Iniciar sesion - PsicoApp{% endblock %}
+{% block titulo %}Iniciar sesión - PsicoApp{% endblock %}
 
 {% block contenido %}
 <div class="row justify-content-center mt-5">
@@ -9,11 +9,11 @@
       <div class="card-body p-4">
 
         <h2 class="text-center mb-4" style="color: #f91d05;">PsicoApp</h2>
-        <h5 class="text-center text-muted mb-4">Iniciar sesion</h5>
+        <h5 class="text-center text-muted mb-4">Iniciar sesión</h5>
 
         {% if form.errors %}
           <div class="alert alert-danger">
-            Usuario o contrasena incorrectos.
+            Usuario o contraseña incorrectos.
           </div>
         {% endif %}
 
@@ -25,9 +25,9 @@
                    class="form-control" placeholder="Tu nombre de usuario" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Contrasena</label>
+            <label class="form-label">Contraseña</label>
             <input type="password" name="password"
-                   class="form-control" placeholder="Tu contrasena" required>
+                   class="form-control" placeholder="Tu contraseña" required>
           </div>
           <button type="submit" class="btn btn-danger w-100 mb-3">
             Entrar
@@ -36,14 +36,14 @@
 
         <hr>
         <div class="text-center d-grid gap-2">
-          <a href="{% url 'cuentas:registro' %}" class="btn btn-outline-secondary btn-sm">
+          <a href="{% url 'cuentas:registro' %}" class="btn btn-outline-danger btn-sm">
             ¿Eres especialista? Solicita registro
           </a>
           <a href="{% url 'gestion_usuarios:ingresar_pin' %}" class="btn btn-outline-danger btn-sm">
             Fui invitado — activar mi cuenta
           </a>
           <a href="{% url 'cuentas:password_reset' %}" class="text-muted small mt-1">
-            Olvide mi contrasena
+            Olvidé mi contraseña
           </a>
         </div>
 

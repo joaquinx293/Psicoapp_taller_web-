@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titulo %}Resultado del cuestionario{% endblock %}
+{% block contenido %}
+
+<div class="text-center py-4">
+  <h2 class="mb-1">{{ respuesta.cuestionario.nombre }}</h2>
+  <p class="text-muted">Respondido el {{ respuesta.fecha_respuesta|date:"d/m/Y \a \l\a\s H:i" }}</p>
+
+  <div class="card shadow-sm mx-auto mt-4" style="max-width: 480px;">
+    <div class="card-body py-4">
+
+      <p class="text-muted mb-1">Puntaje total</p>
+      <h1 class="display-3 fw-bold text-danger mb-3">{{ puntaje }}</h1>
+
+      {% if es_gad7 %}
+      <p class="text-muted mb-2">Clasificación GAD-7</p>
+      <span class="badge bg-{{ clasificacion.1 }} fs-5 px-4 py-2 mb-4">
+        {{ clasificacion.0 }}
+      </span>
+
+      <div class="table-responsive mt-3">
+        <table class="table table-sm table-bordered text-start">
+          <thead class="table-light">
+            <tr>
+              <th>Puntaje</th>
+              <th>Nivel de ansiedad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr {% if puntaje <= 4 %}class="table-success fw-semibold"{% endif %}>
+              <td>0 – 4</td><td>Mínimo</td>
+            </tr>
+            <tr {% if puntaje >= 5 and puntaje <= 9 %}class="table-warning fw-semibold"{% endif %}>
+              <td>5 – 9</td><td>Leve</td>
+            </tr>
+            <tr {% if puntaje >= 10 and puntaje <= 14 %}class="table-danger fw-semibold"{% endif %}>
+              <td>10 – 14</td><td>Moderado</td>
+            </tr>
+            <tr {% if puntaje >= 15 %}class="fw-semibold"{% endif %}>
+              <td>15 – 21</td><td>Severo</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="text-muted small mt-3">
+        La cumplimentación de este cuestionario no reemplaza en ningún caso
+        una evaluación formal a cargo de un profesional de la salud.
+      </p>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <a href="{% url 'cuestionarios:mis_cuestionarios_paciente' %}" class="btn btn-outline-danger mt-4">
+    Volver a mis cuestionarios
+  </a>
+</div>
+
+{% endblock %}

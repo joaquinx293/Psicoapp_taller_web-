@@ -12,15 +12,15 @@ class ActivarPacienteForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     password1 = forms.CharField(
-        label='Contrasena',
+        label='Contraseña',
         widget=forms.PasswordInput(attrs={'class': 'form-control'})
     )
     password2 = forms.CharField(
-        label='Confirmar contrasena',
+        label='Confirmar contraseña',
         widget=forms.PasswordInput(attrs={'class': 'form-control'})
     )
     acepta_terminos = forms.BooleanField(
-        label='Acepto los terminos y condiciones',
+        label='Acepto los términos y condiciones',
         required=True
     )
 
@@ -35,7 +35,7 @@ class ActivarPacienteForm(forms.Form):
         p1 = cleaned.get('password1')
         p2 = cleaned.get('password2')
         if p1 and p2 and p1 != p2:
-            raise forms.ValidationError('Las contrasenas no coinciden.')
+            raise forms.ValidationError('Las contraseñas no coinciden.')
         if p1 and len(p1) < 8:
-            raise forms.ValidationError('La contrasena debe tener al menos 8 caracteres.')
+            raise forms.ValidationError('La contraseña debe tener al menos 8 caracteres.')
         return cleaned

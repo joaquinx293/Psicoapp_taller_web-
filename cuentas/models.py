@@ -35,7 +35,7 @@ class Usuario(AbstractUser):
     INACTIVO = 'inactivo'
 
     ESTADOS = [
-        (PENDIENTE, 'Pendiente de validacion'),
+        (PENDIENTE, 'Pendiente de validación'),
         (ACTIVO, 'Activo'),
         (RECHAZADO, 'Rechazado'),
         (INACTIVO, 'Inactivo'),

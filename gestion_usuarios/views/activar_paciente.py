@@ -24,13 +24,13 @@ def ingresar_pin(request):
                     estado=InvitacionPaciente.PENDIENTE,
                 )
             except InvitacionPaciente.DoesNotExist:
-                form.add_error(None, 'Correo o codigo incorrecto.')
+                form.add_error(None, 'Correo o código incorrecto.')
                 return render(request, 'gestion_usuarios/ingresar_pin.html', {'form': form})
 
             if not invitacion.esta_vigente():
                 invitacion.estado = InvitacionPaciente.EXPIRADA
                 invitacion.save()
-                messages.error(request, 'Tu codigo ha expirado. Pide una nueva invitacion.')
+                messages.error(request, 'Tu código ha expirado. Pide una nueva invitación.')
                 return render(request, 'gestion_usuarios/ingresar_pin.html', {'form': form})
 
             # Guardamos el id de la invitación en sesión para el paso 2
@@ -46,7 +46,7 @@ def completar_registro(request):
     """Paso 2: el paciente elige usuario y contraseña."""
     invitacion_id = request.session.get('invitacion_id')
     if not invitacion_id:
-        messages.error(request, 'Sesion expirada. Ingresa tu codigo nuevamente.')
+        messages.error(request, 'Sesión expirada. Ingresa tu código nuevamente.')
         return redirect('gestion_usuarios:ingresar_pin')
 
     try:
@@ -55,13 +55,13 @@ def completar_registro(request):
             estado=InvitacionPaciente.PENDIENTE,
         )
     except InvitacionPaciente.DoesNotExist:
-        messages.error(request, 'La invitacion ya no es valida.')
+        messages.error(request, 'La invitación ya no es válida.')
         return redirect('gestion_usuarios:ingresar_pin')
 
     if not invitacion.esta_vigente():
         invitacion.estado = InvitacionPaciente.EXPIRADA
         invitacion.save()
-        messages.error(request, 'Tu codigo ha expirado. Pide una nueva invitacion.')
+        messages.error(request, 'Tu código ha expirado. Pide una nueva invitación.')
         return redirect('gestion_usuarios:ingresar_pin')
 
     terminos = TerminosCondiciones.get_vigente()
@@ -93,7 +93,7 @@ def completar_registro(request):
 
             messages.success(
                 request,
-                'Cuenta activada correctamente. Ya puedes iniciar sesion.'
+                'Cuenta activada correctamente. Ya puedes iniciar sesión.'
             )
             return redirect('cuentas:login')
     else:

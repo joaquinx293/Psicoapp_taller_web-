@@ -17,7 +17,7 @@ def eliminar_pregunta(request, pk):
     if cuestionario.estado not in (cuestionario.BORRADOR, cuestionario.RECHAZADO):
         messages.error(
             request,
-            'No puedes eliminar preguntas de un cuestionario que ya fue enviado a revision.'
+            'No puedes eliminar preguntas de un cuestionario que ya fue enviado a revisión.'
         )
         return redirect('cuestionarios:detalle', pk=cuestionario.pk)
 

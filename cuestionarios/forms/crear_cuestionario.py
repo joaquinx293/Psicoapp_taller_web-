@@ -14,5 +14,5 @@ class CuestionarioForm(forms.ModelForm):
         }
         labels = {
             'nombre': 'Nombre del cuestionario',
-            'descripcion': 'Descripcion',
+            'descripcion': 'Descripción',
         }

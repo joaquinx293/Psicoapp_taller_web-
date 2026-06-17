@@ -9,7 +9,7 @@
 
         <h3 class="mb-1">Solicitud de registro como especialista</h3>
         <p class="text-muted mb-4">
-          Tu solicitud sera revisada por el administrador antes de activarse.
+          Tu solicitud será revisada por el administrador antes de activarse.
         </p>
 
         <form method="post" novalidate>
@@ -24,7 +24,7 @@
               {% endif %}
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label">Correo electronico *</label>
+              <label class="form-label">Correo electrónico *</label>
               {{ form.email }}
               {% if form.email.errors %}
                 <div class="text-danger small">{{ form.email.errors|join:", " }}</div>
@@ -53,15 +53,15 @@
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Contrasena *</label>
+              <label class="form-label">Contraseña *</label>
               {{ form.password1 }}
-              <div class="form-text">Minimo 8 caracteres, una mayuscula y un numero.</div>
+              <div class="form-text">Mínimo 8 caracteres, una mayúscula y un número.</div>
               {% if form.password1.errors %}
                 <div class="text-danger small">{{ form.password1.errors|join:", " }}</div>
               {% endif %}
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label">Confirmar contrasena *</label>
+              <label class="form-label">Confirmar contraseña *</label>
               {{ form.password2 }}
               {% if form.password2.errors %}
                 <div class="text-danger small">{{ form.password2.errors|join:", " }}</div>
@@ -72,7 +72,7 @@
           {% if terminos %}
           <div class="mb-3">
             <label class="form-label fw-bold">
-              Terminos y Condiciones (version {{ terminos.version }})
+              Términos y Condiciones (versión {{ terminos.version }})
             </label>
             <div class="border rounded p-3 bg-light"
                  style="max-height: 180px; overflow-y: auto; font-size: 0.9rem;">
@@ -84,7 +84,7 @@
           <div class="form-check mb-4">
             {{ form.acepta_terminos }}
             <label class="form-check-label" for="{{ form.acepta_terminos.id_for_label }}">
-              He leido y acepto los terminos y condiciones
+              He leído y acepto los términos y condiciones
             </label>
           </div>
 

@@ -23,7 +23,14 @@
         <span class="fw-semibold">{{ respuesta.cuestionario.nombre }}</span>
         <span class="text-muted small ms-2">{{ respuesta.fecha_respuesta|date:"d/m/Y H:i" }}</span>
       </div>
-      <span class="badge bg-danger fs-6">Puntaje: {{ respuesta.puntaje_total }}</span>
+      <div class="d-flex align-items-center gap-2">
+        {% if respuesta.cuestionario.subtipo == 'gad7' %}
+          {% with cls=respuesta.clasificacion_gad7 %}
+            <span class="badge bg-{{ cls.1 }}">{{ cls.0 }}</span>
+          {% endwith %}
+        {% endif %}
+        <span class="badge bg-danger fs-6">Puntaje: {{ respuesta.puntaje_total }}</span>
+      </div>
     </div>
     <div class="card-body p-0">
       <table class="table table-sm mb-0">
@@ -63,7 +70,7 @@
   {% endfor %}
 {% else %}
   <div class="alert alert-info">
-    Este paciente aun no ha respondido ningun cuestionario.
+    Este paciente aún no ha respondido ningún cuestionario.
   </div>
 {% endif %}
 
