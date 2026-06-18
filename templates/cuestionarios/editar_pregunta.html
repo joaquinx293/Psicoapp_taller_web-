@@ -19,10 +19,36 @@
             <label class="form-label">Tipo de respuesta</label>
             {{ form.escala }}
           </div>
-          <div class="mb-4">
-            <label class="form-label">Peso (1 a 10)</label>
+
+          <!-- Etiquetas para tipo binario -->
+          <div id="campos-binario" class="mb-3" style="display:none;">
+            <label class="form-label small fw-semibold">Etiquetas personalizadas</label>
+            <div class="d-flex gap-2">
+              <div class="w-50">
+                <label class="form-label small">Opción 1 (valor 0)</label>
+                {{ form.etiqueta_opcion_1 }}
+                {% if form.etiqueta_opcion_1.errors %}
+                  <div class="text-danger small">{{ form.etiqueta_opcion_1.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+              <div class="w-50">
+                <label class="form-label small">Opción 2 (valor 1)</label>
+                {{ form.etiqueta_opcion_2 }}
+                {% if form.etiqueta_opcion_2.errors %}
+                  <div class="text-danger small">{{ form.etiqueta_opcion_2.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div id="campo-peso" class="mb-4">
+            <label class="form-label">Peso (0 a 10)</label>
             {{ form.peso }}
           </div>
+          <div id="aviso-sin-puntaje" class="alert alert-info small py-2 mb-3" style="display:none;">
+            Este tipo de pregunta no suma al puntaje total.
+          </div>
+
           <button type="submit" class="btn btn-danger">Guardar cambios</button>
           <a href="{% url 'cuestionarios:detalle' pregunta.cuestionario.pk %}" class="btn btn-link">Cancelar</a>
         </form>
@@ -30,4 +56,23 @@
     </div>
   </div>
 </div>
+
+<script>
+  const escalaSelect = document.getElementById('id_escala');
+  const camposBinario = document.getElementById('campos-binario');
+  const campoPeso = document.getElementById('campo-peso');
+  const avisoSinPuntaje = document.getElementById('aviso-sin-puntaje');
+  const SIN_PUNTAJE = ['texto', 'fecha'];
+
+  function actualizarCampos() {
+    const val = escalaSelect.value;
+    camposBinario.style.display = (val === 'binario') ? 'block' : 'none';
+    const sinPuntaje = SIN_PUNTAJE.includes(val);
+    campoPeso.style.display = sinPuntaje ? 'none' : 'block';
+    avisoSinPuntaje.style.display = sinPuntaje ? 'block' : 'none';
+  }
+
+  escalaSelect.addEventListener('change', actualizarCampos);
+  actualizarCampos();
+</script>
 {% endblock %}
