@@ -15,7 +15,7 @@
           <th>Nombre</th>
           <th>Correo</th>
           <th>Estado</th>
-          <th>Fecha invitacion</th>
+          <th>Fecha invitación</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -28,7 +28,7 @@
             {% if inv.estado == 'aceptada' %}
               <span class="badge bg-success">Activo</span>
             {% elif inv.estado == 'pendiente' %}
-              <span class="badge bg-warning text-dark">Pendiente de activacion</span>
+              <span class="badge bg-warning text-dark">Pendiente de activación</span>
             {% else %}
               <span class="badge bg-secondary">Expirada</span>
             {% endif %}
@@ -46,6 +46,11 @@
                   Ver respuestas
                 </a>
               </div>
+            {% elif inv.estado == 'pendiente' %}
+              <a href="{% url 'cuestionarios:asignar_pendiente' inv.pk %}"
+                 class="btn btn-sm btn-outline-warning">
+                Precargar tests
+              </a>
             {% else %}
               <span class="text-muted small">—</span>
             {% endif %}
@@ -58,7 +63,7 @@
 </div>
 {% else %}
 <div class="alert alert-info">
-  Aun no has invitado a ningun paciente.
+  Aún no has invitado a ningún paciente.
   <a href="{% url 'gestion_usuarios:invitar_paciente' %}">Invita al primero</a>.
 </div>
 {% endif %}

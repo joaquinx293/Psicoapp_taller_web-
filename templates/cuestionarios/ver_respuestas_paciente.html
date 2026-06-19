@@ -23,7 +23,18 @@
         <span class="fw-semibold">{{ respuesta.cuestionario.nombre }}</span>
         <span class="text-muted small ms-2">{{ respuesta.fecha_respuesta|date:"d/m/Y H:i" }}</span>
       </div>
-      <span class="badge bg-danger fs-6">Puntaje: {{ respuesta.puntaje_total }}</span>
+      <div class="d-flex align-items-center gap-2">
+        {% if respuesta.cuestionario.subtipo == 'gad7' %}
+          {% with cls=respuesta.clasificacion_gad7 %}
+            <span class="badge bg-{{ cls.1 }}">{{ cls.0 }}</span>
+          {% endwith %}
+        {% elif respuesta.cuestionario.subtipo == 'pss10' %}
+          {% with cls=respuesta.clasificacion_pss10 %}
+            <span class="badge bg-{{ cls.1 }}">{{ cls.0 }}</span>
+          {% endwith %}
+        {% endif %}
+        <span class="badge bg-danger fs-6">Puntaje: {{ respuesta.puntaje_total }}</span>
+      </div>
     </div>
     <div class="card-body p-0">
       <table class="table table-sm mb-0">
@@ -45,9 +56,40 @@
             <td class="text-center">
               <span class="badge bg-light text-dark border">{{ rp.pregunta.get_escala_display }}</span>
             </td>
-            <td class="text-center fw-semibold">{{ rp.valor }}</td>
-            <td class="text-center text-muted">{{ rp.pregunta.peso }}</td>
-            <td class="text-center fw-semibold text-danger">{{ rp.valor|add:0 }}</td>
+
+            {# Columna Respuesta: depende del tipo #}
+            {% if rp.pregunta.escala == 'texto' %}
+              <td class="fw-semibold fst-italic text-secondary" style="max-width:220px; word-break:break-word;">
+                {{ rp.valor_texto|default:"—" }}
+              </td>
+            {% elif rp.pregunta.escala == 'fecha' %}
+              <td class="fw-semibold text-secondary">
+                {{ rp.valor_texto|default:"—" }}
+              </td>
+            {% elif rp.pregunta.escala == 'binario' %}
+              <td class="text-center fw-semibold">
+                {% if rp.valor == 0 %}{{ rp.pregunta.etiqueta_opcion_1|default:"Opción 1" }}
+                {% else %}{{ rp.pregunta.etiqueta_opcion_2|default:"Opción 2" }}{% endif %}
+                <span class="text-muted small">({{ rp.valor }})</span>
+              </td>
+            {% elif rp.pregunta.escala == 'verdadero_falso' %}
+              <td class="text-center fw-semibold">
+                {% if rp.valor == 1 %}Verdadero{% else %}Falso{% endif %}
+              </td>
+            {% else %}
+              <td class="text-center fw-semibold">{{ rp.valor }}</td>
+            {% endif %}
+
+            {# Peso y subtotal: vacío para tipos sin puntaje #}
+            {% if rp.pregunta.escala == 'texto' or rp.pregunta.escala == 'fecha' %}
+              <td class="text-center text-muted">—</td>
+              <td class="text-center text-muted">—</td>
+            {% else %}
+              <td class="text-center text-muted">{{ rp.pregunta.peso }}</td>
+              <td class="text-center fw-semibold text-danger">
+                {% if rp.valor is not None %}{{ rp.valor|add:0 }}{% else %}—{% endif %}
+              </td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
@@ -63,7 +105,7 @@
   {% endfor %}
 {% else %}
   <div class="alert alert-info">
-    Este paciente aun no ha respondido ningun cuestionario.
+    Este paciente aún no ha respondido ningún cuestionario.
   </div>
 {% endif %}
 
