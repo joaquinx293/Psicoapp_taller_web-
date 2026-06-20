@@ -18,7 +18,6 @@ def asignar_pendiente(request, invitacion_pk):
         especialista=request.user,
     )
 
-    # Si ya se registró, redirigir a la asignación normal
     if invitacion.paciente:
         return redirect('cuestionarios:asignar_cuestionario', paciente_pk=invitacion.paciente.pk)
 

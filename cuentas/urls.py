@@ -23,6 +23,13 @@ urlpatterns = [
     path('admin-dashboard/reactivar/<int:pk>/', views.reactivar_usuario, name='reactivar_usuario'),
     path('admin-dashboard/eliminar/<int:pk>/', views.eliminar_usuario, name='eliminar_usuario'),
 
+    # HU-022: Registrar estado de ánimo diario
+    path('animo/', views.registrar_animo, name='registrar_animo'),
+
+    # HU-024: Visualizar calendario emocional
+    path('animo/calendario/', views.calendario_animo, name='calendario_animo'),
+    path('animo/calendario/<int:paciente_id>/', views.calendario_animo, name='calendario_animo_paciente'),
+
     # HU-005: recuperacion de contrasena
     path('password_reset/', auth_views.PasswordResetView.as_view(
         template_name='cuentas/password_reset.html',

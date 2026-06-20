@@ -71,3 +71,41 @@ class Usuario(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.get_rol_display()})"
+
+
+class RegistroAnimo(models.Model):
+    """HU-022: Registro diario del estado de ánimo del paciente (1–10)."""
+
+    ETIQUETAS = {
+        1: 'Muy mal',
+        2: 'Muy mal',
+        3: 'Mal',
+        4: 'Mal',
+        5: 'Regular',
+        6: 'Regular',
+        7: 'Bien',
+        8: 'Bien',
+        9: 'Excelente',
+        10: 'Excelente',
+    }
+
+    paciente = models.ForeignKey(
+        'Usuario',
+        on_delete=models.CASCADE,
+        related_name='registros_animo',
+        limit_choices_to={'rol': 'paciente'},
+    )
+    fecha = models.DateField()
+    valor = models.IntegerField()  # 1–10
+
+    class Meta:
+        unique_together = ('paciente', 'fecha')
+        ordering = ['-fecha']
+        verbose_name = 'Registro de ánimo'
+        verbose_name_plural = 'Registros de ánimo'
+
+    def get_etiqueta(self):
+        return self.ETIQUETAS.get(self.valor, '')
+
+    def __str__(self):
+        return f"{self.paciente.username} – {self.fecha}: {self.valor}/10"

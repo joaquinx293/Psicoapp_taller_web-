@@ -18,10 +18,12 @@ class Cuestionario(models.Model):
     SUBTIPO_PERSONALIZADO = 'personalizado'
     SUBTIPO_GAD7 = 'gad7'
     SUBTIPO_PSS10 = 'pss10'
+    SUBTIPO_PHQ9 = 'phq9'
     SUBTIPOS = [
         (SUBTIPO_PERSONALIZADO, 'Personalizado'),
         (SUBTIPO_GAD7, 'GAD-7 (Ansiedad)'),
         (SUBTIPO_PSS10, 'PSS-10 (Estrés percibido)'),
+        (SUBTIPO_PHQ9, 'PHQ-9 (Depresión)'),
     ]
 
     # especialista=None indica plantilla del sistema
@@ -60,6 +62,7 @@ class Pregunta(models.Model):
     ESCALA_SINO = 'sino'
     ESCALA_GAD7 = 'gad7'
     ESCALA_PSS10 = 'pss10'
+    ESCALA_PHQ9 = 'phq9'
     ESCALA_TEXTO = 'texto'
     ESCALA_BINARIO = 'binario'
     ESCALA_FECHA = 'fecha'
@@ -71,6 +74,7 @@ class Pregunta(models.Model):
         (ESCALA_SINO, 'Sí / No'),
         (ESCALA_GAD7, 'GAD-7 (Nunca → Casi cada día)'),
         (ESCALA_PSS10, 'PSS-10 (Nunca → Muy a menudo)'),
+        (ESCALA_PHQ9, 'PHQ-9 (Ningún día → Casi todos los días)'),
         (ESCALA_TEXTO, 'Caja de texto (sin puntaje)'),
         (ESCALA_BINARIO, 'Etiquetas personalizadas (ej: Triste / Feliz)'),
         (ESCALA_FECHA, 'Fecha y hora (sin puntaje)'),
@@ -184,6 +188,18 @@ class RespuestaCuestionario(models.Model):
             return ('Estrés moderado (14-26)', 'warning')
         else:
             return ('Estrés alto (27-40)', 'danger')
+
+    def clasificacion_phq9(self):
+        """Retorna (etiqueta, color_bootstrap) según puntaje PHQ-9."""
+        puntaje = self.puntaje_total()
+        if puntaje <= 4:
+            return ('Mínimo (0-4)', 'success')
+        elif puntaje <= 9:
+            return ('Leve (5-9)', 'warning')
+        elif puntaje <= 14:
+            return ('Moderado (10-14)', 'danger')
+        else:
+            return ('Severo (15-27)', 'dark')
 
     def __str__(self):
         return f"{self.paciente.username} — {self.cuestionario.nombre} ({self.fecha_respuesta:%d/%m/%Y})"

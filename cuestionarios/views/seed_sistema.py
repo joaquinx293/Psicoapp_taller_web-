@@ -1,4 +1,4 @@
-# Crea las plantillas del sistema (GAD-7 y PSS-10) si no existen.
+# Crea las plantillas del sistema (GAD-7, PSS-10 y PHQ-9) si no existen.
 # Se llama desde cuestionarios_publicos al cargar la página.
 from ..models import Cuestionario, Pregunta
 
@@ -32,10 +32,26 @@ _PSS10_PREGUNTAS = [
 ]
 
 
+# ─── PHQ-9 ────────────────────────────────────────────────────────────────────
+
+_PHQ9_PREGUNTAS = [
+    'Poco interés o placer en hacer cosas.',
+    'Se ha sentido decaído(a), deprimido(a) o sin esperanzas.',
+    'Ha tenido dificultad para quedarse o permanecer dormido(a), o ha dormido demasiado.',
+    'Se ha sentido cansado(a) o con poca energía.',
+    'Sin apetito o ha comido en exceso.',
+    'Se ha sentido mal con usted mismo(a), o que es un fracaso, o que ha quedado mal con usted mismo(a) o con su familia.',
+    'Ha tenido dificultad para concentrarse en ciertas actividades, tales como leer el periódico o ver la televisión.',
+    '¿Se ha movido o hablado tan lento que otras personas podrían haberlo notado? O lo contrario: muy inquieto(a) o agitado(a) que ha estado moviéndose mucho más de lo normal.',
+    'Pensamientos de que estaría mejor muerto(a) o de lastimarse de alguna manera.',
+]
+
+
 def asegurar_cuestionarios_sistema():
-    """Crea GAD-7 y PSS-10 como plantillas del sistema si no existen."""
+    """Crea GAD-7, PSS-10 y PHQ-9 como plantillas del sistema si no existen."""
     _asegurar_gad7()
     _asegurar_pss10()
+    _asegurar_phq9()
 
 
 def _asegurar_gad7():
@@ -96,4 +112,34 @@ def _asegurar_pss10():
             peso=1,
             orden=i,
             invertir=invertir,
+        )
+
+
+def _asegurar_phq9():
+    existe = Cuestionario.objects.filter(
+        especialista__isnull=True,
+        subtipo=Cuestionario.SUBTIPO_PHQ9,
+    ).exists()
+    if existe:
+        return
+
+    c = Cuestionario.objects.create(
+        especialista=None,
+        nombre='PHQ-9 — Cuestionario sobre la salud del paciente',
+        descripcion=(
+            'Escala estandarizada de 9 preguntas para evaluar el nivel de '
+            'síntomas depresivos durante las últimas dos semanas. '
+            'Clasificación: Mínimo (0-4), Leve (5-9), Moderado (10-14), Severo (15-27).'
+        ),
+        estado=Cuestionario.APROBADO,
+        subtipo=Cuestionario.SUBTIPO_PHQ9,
+        publico=True,
+    )
+    for i, texto in enumerate(_PHQ9_PREGUNTAS, start=1):
+        Pregunta.objects.create(
+            cuestionario=c,
+            texto=texto,
+            escala=Pregunta.ESCALA_PHQ9,
+            peso=1,
+            orden=i,
         )

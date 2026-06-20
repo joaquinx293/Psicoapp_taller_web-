@@ -26,4 +26,8 @@ urlpatterns = [
     # Especialista: explorar y copiar cuestionarios publicos
     path('publicos/', views.cuestionarios_publicos, name='cuestionarios_publicos'),
     path('publicos/<int:pk>/copiar/', views.cuestionarios_publicos, name='copiar_cuestionario_publico'),
+
+    # Reordenar preguntas via drag & drop
+    path('<int:pk>/reordenar/', views.reordenar_preguntas, name='reordenar_preguntas'),
+    path('<int:pk>/reordenar/guardar/', views.guardar_orden, name='guardar_orden'),
 ]

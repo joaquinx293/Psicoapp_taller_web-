@@ -14,3 +14,4 @@ from .ver_respuestas_paciente import ver_respuestas_paciente                  # 
 from .crear_gad7 import crear_gad7                                            # redirige a cuestionarios_publicos
 from .revisar_cuestionario import revisar_cuestionario                        # admin revisa cuestionario
 from .cuestionarios_publicos import cuestionarios_publicos                    # especialista ve públicos
+from .reordenar_preguntas import reordenar_preguntas, guardar_orden           # reordenar via drag & drop

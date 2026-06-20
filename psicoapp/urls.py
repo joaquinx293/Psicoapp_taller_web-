@@ -23,5 +23,6 @@ urlpatterns = [
     path('cuentas/', include('cuentas.urls')),
     path('gestion/', include('gestion_usuarios.urls')),
     path('cuestionarios/', include('cuestionarios.urls')),
+    path('mantenedores/', include('mantenedores.urls')),
     path('', lambda request: redirect('cuentas:login'), name='inicio'),
 ]

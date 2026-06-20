@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block titulo %}Calendario emocional — PsicoApp{% endblock %}
+
+{% block contenido %}
+<style>
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .cal-header {
+    text-align: center;
+    font-weight: 600;
+    font-size: .82rem;
+    color: #666;
+    padding: 4px 0;
+  }
+
+
+  
+  .cal-day {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+    font-weight: 600;
+    position: relative;
+    cursor: default;
+    transition: transform .1s;
+  }
+  .cal-day:hover { transform: scale(1.12); z-index: 1; }
+  .cal-day.vacio { background: transparent; }
+  .cal-day.sin-registro {
+    background: #f3f4f6;
+    color: #bbb;
+    border: 1px dashed #ddd;
+  }
+  .cal-day.nivel-alto   { background: #FFD600; color: #5a4000; }   /* 8-10 amarillo claro */
+  .cal-day.nivel-medio  { background: #FFA000; color: #fff;    }   /* 5-7  amarillo oscuro */
+  .cal-day.nivel-bajo   { background: #9E9E9E; color: #fff;    }   /* 1-4  gris */
+  .cal-day.hoy-mark {
+    box-shadow: 0 0 0 3px #C0392B;
+  }
+  .leyenda-item { width: 18px; height: 18px; border-radius: 4px; display: inline-block; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  {% if vista_especialista %}
+    <h2 class="fw-bold mb-0">Calendario de {{ paciente.get_full_name|default:paciente.username }}</h2>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">← Volver</a>
+  {% else %}
+    <h2 class="fw-bold mb-0">Mi calendario emocional</h2>
+    <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-outline-secondary btn-sm">← Volver</a>
+  {% endif %}
+</div>
+
+<!-- Navegación de mes -->
+<div class="d-flex align-items-center justify-content-center gap-3 mb-4">
+  <a href="?mes={{ mes_ant }}&anio={{ anio_ant }}"
+     class="btn btn-outline-danger btn-sm px-3">&#8249;</a>
+  <h5 class="mb-0 fw-bold" style="min-width:160px; text-align:center;">
+    {{ nombre_mes }} {{ anio }}
+  </h5>
+  <a href="?mes={{ mes_sig }}&anio={{ anio_sig }}"
+     class="btn btn-outline-danger btn-sm px-3">&#8250;</a>
+</div>
+
+<!-- Calendario -->
+<div class="cal-grid mb-2">
+  {% for d in dias_semana %}
+    <div class="cal-header">{{ d }}</div>
+  {% endfor %}
+
+  {% for semana in semanas %}
+    {% for dia, registro in semana %}
+      {% if dia is None %}
+        <div class="cal-day vacio"></div>
+      {% elif registro %}
+        {% if registro.valor >= 8 %}
+          {% with nivel="nivel-alto" %}
+          <div class="cal-day {{ nivel }}{% if hoy.day == dia and hoy.month == mes and hoy.year == anio %} hoy-mark{% endif %}"
+               title="{{ dia }}/{{ mes }}/{{ anio }} — {{ registro.valor }}/10 ({{ registro.get_etiqueta }})">
+            {{ dia }}
+          </div>
+          {% endwith %}
+        {% elif registro.valor >= 5 %}
+          <div class="cal-day nivel-medio{% if hoy.day == dia and hoy.month == mes and hoy.year == anio %} hoy-mark{% endif %}"
+               title="{{ dia }}/{{ mes }}/{{ anio }} — {{ registro.valor }}/10 ({{ registro.get_etiqueta }})">
+            {{ dia }}
+          </div>
+        {% else %}
+          <div class="cal-day nivel-bajo{% if hoy.day == dia and hoy.month == mes and hoy.year == anio %} hoy-mark{% endif %}"
+               title="{{ dia }}/{{ mes }}/{{ anio }} — {{ registro.valor }}/10 ({{ registro.get_etiqueta }})">
+            {{ dia }}
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="cal-day sin-registro{% if hoy.day == dia and hoy.month == mes and hoy.year == anio %} hoy-mark{% endif %}"
+             title="{{ dia }}/{{ mes }}/{{ anio }} — Sin registro">
+          {{ dia }}
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+</div>
+<div class="d-flex justify-content-center gap-3 flex-wrap mt-3 mb-4">
+  <div class="d-flex align-items-center gap-2">
+    <span class="leyenda-item" style="background:#FFD600;"></span>
+    <small class="text-muted">Excelente (8–10)</small>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span class="leyenda-item" style="background:#FFA000;"></span>
+    <small class="text-muted">Regular (5–7)</small>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span class="leyenda-item" style="background:#9E9E9E;"></span>
+    <small class="text-muted">Bajo (1–4)</small>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span class="leyenda-item" style="background:#f3f4f6; border:1px dashed #ddd;"></span>
+    <small class="text-muted">Sin registro</small>
+  </div>
+</div>
+
+
+
+
+{% if not vista_especialista %}
+<div class="text-center">
+  <a href="{% url 'cuentas:registrar_animo' %}" class="btn btn-danger">
+    Registrar estado de ánimo de hoy
+  </a>
+</div>
+{% endif %}
+<!-- Tooltip nativo con CSS; para mejor UX en móvil se usa el atributo title -->
+{% endblock %}

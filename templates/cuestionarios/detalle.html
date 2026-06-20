@@ -44,7 +44,17 @@
 <div class="row mt-3">
   <!-- Lista de preguntas -->
   <div class="{% if cuestionario.estado == 'borrador' or cuestionario.estado == 'rechazado' %}col-md-7{% else %}col-12{% endif %}">
-    <h5>Preguntas ({{ preguntas|length }})</h5>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Preguntas ({{ preguntas|length }})</h5>
+      {% if cuestionario.subtipo == 'personalizado' and preguntas|length > 1 %}
+        {% if cuestionario.estado == 'borrador' or cuestionario.estado == 'rechazado' %}
+        <a href="{% url 'cuestionarios:reordenar_preguntas' cuestionario.pk %}"
+           class="btn btn-sm btn-outline-secondary">
+          ⠿ Reordenar
+        </a>
+        {% endif %}
+      {% endif %}
+    </div>
     {% if preguntas %}
     <ul class="list-group">
       {% for p in preguntas %}

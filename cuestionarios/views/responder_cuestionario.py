@@ -14,6 +14,7 @@ OPCIONES_ESCALA = {
     'sino':    [(1, 'Sí'), (0, 'No')],
     'gad7':    [(0, 'Nunca'), (1, 'Varios días'), (2, 'La mitad de los días'), (3, 'Casi cada día')],
     'pss10':   [(0, 'Nunca'), (1, 'Casi nunca'), (2, 'De vez en cuando'), (3, 'A menudo'), (4, 'Muy a menudo')],
+    'phq9':    [(0, 'Ningún día'), (1, 'Varios días'), (2, 'Más de la mitad de los días'), (3, 'Casi todos los días')],
     'verdadero_falso': [(1, 'Verdadero'), (0, 'Falso')],
 }
 

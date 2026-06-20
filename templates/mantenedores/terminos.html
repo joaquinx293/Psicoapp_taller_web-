@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block titulo %}Términos y Condiciones — PsicoApp{% endblock %}
+
+{% block contenido %}
+<style>
+  .section-title { border-bottom: 2px solid #C0392B; padding-bottom: 6px; color: #922B21; }
+  .table thead   { background-color: #C0392B; color: white; }
+  .badge-vigente { background-color: #C0392B; }
+  .nav-tabs .nav-link.active { border-bottom-color: #C0392B; color: #C0392B; font-weight: 600; }
+  .nav-tabs .nav-link { color: #555; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-bold mb-0">Términos y Condiciones</h2>
+  <a href="{% url 'cuentas:dashboard_admin' %}" class="btn btn-outline-danger">
+    ← Volver al panel
+  </a>
+</div>
+
+<!-- Versiones vigentes con tabs -->
+<h5 class="section-title mb-3">Versiones vigentes</h5>
+<ul class="nav nav-tabs mb-3" id="tabsVigente">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-paciente">
+      Paciente
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-especialista">
+      Especialista
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content mb-5">
+  <div class="tab-pane fade show active" id="tab-paciente">
+    {% if vigente_paciente %}
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center"
+           style="background-color:#C0392B; color:white;">
+        <span>Versión {{ vigente_paciente.version }} — Paciente</span>
+        <small>Publicado el {{ vigente_paciente.fecha_publicacion|date:"d/m/Y H:i" }}
+          por {{ vigente_paciente.autor.get_full_name|default:vigente_paciente.autor.username }}</small>
+      </div>
+      <div class="card-body">
+        <pre class="mb-0" style="white-space:pre-wrap; font-family:inherit;">{{ vigente_paciente.contenido }}</pre>
+      </div>
+    </div>
+    {% else %}
+    <div class="alert alert-light border">No hay términos y condiciones para Paciente aún.</div>
+    {% endif %}
+  </div>
+
+  <div class="tab-pane fade" id="tab-especialista">
+    {% if vigente_especialista %}
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center"
+           style="background-color:#C0392B; color:white;">
+        <span>Versión {{ vigente_especialista.version }} — Especialista</span>
+        <small>Publicado el {{ vigente_especialista.fecha_publicacion|date:"d/m/Y H:i" }}
+          por {{ vigente_especialista.autor.get_full_name|default:vigente_especialista.autor.username }}</small>
+      </div>
+      <div class="card-body">
+        <pre class="mb-0" style="white-space:pre-wrap; font-family:inherit;">{{ vigente_especialista.contenido }}</pre>
+      </div>
+    </div>
+    {% else %}
+    <div class="alert alert-light border">No hay términos y condiciones para Especialista aún.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Publicar nueva versión -->
+<h5 class="section-title mb-3">Publicar nueva versión</h5>
+<div class="card shadow-sm mb-5">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Dirigido a</label>
+        <select name="rol" class="form-select" required id="sel-rol">
+          <option value="">— Selecciona el tipo de usuario —</option>
+          {% for valor, etiqueta in rol_choices %}
+          <option value="{{ valor }}">{{ etiqueta }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Contenido</label>
+        <textarea name="contenido" class="form-control" rows="8" id="txt-contenido"
+                  placeholder="Escribe aquí los nuevos términos y condiciones..."
+                  required></textarea>
+        <small class="text-muted">Al publicar, la versión anterior para ese tipo de usuario quedará desactivada.</small>
+      </div>
+      <button type="submit" class="btn btn-danger">Publicar nueva versión</button>
+    </form>
+  </div>
+</div>
+
+<!-- Historial -->
+{% if historial %}
+<h5 class="section-title mb-3">Historial de versiones</h5>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Dirigido a</th><th>Versión</th><th>Fecha</th><th>Autor</th><th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in historial %}
+        <tr>
+          <td class="align-middle">
+            <span class="badge {% if t.rol == 'paciente' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+              {{ t.get_rol_display }}
+            </span>
+          </td>
+          <td class="align-middle">v{{ t.version }}</td>
+          <td class="align-middle">{{ t.fecha_publicacion|date:"d/m/Y H:i" }}</td>
+          <td class="align-middle">{{ t.autor.get_full_name|default:t.autor.username|default:"—" }}</td>
+          <td class="align-middle">
+            {% if t.vigente %}
+              <span class="badge badge-vigente">Vigente</span>
+            {% else %}
+              <span class="text-muted">Antigua</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  const contenidos = {
+    'paciente':     `{{ vigente_paciente.contenido|escapejs }}`,
+    'especialista': `{{ vigente_especialista.contenido|escapejs }}`,
+  };
+  document.getElementById('sel-rol').addEventListener('change', function () {
+    document.getElementById('txt-contenido').value = contenidos[this.value] || '';
+  });
+</script>
+{% endblock %}
