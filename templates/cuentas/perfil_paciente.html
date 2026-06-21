@@ -27,5 +27,41 @@
       </div>
     </div>
   </div>
+
+  <!-- HU-022 / HU-024: Estado de ánimo -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title">Estado de ánimo de hoy</h5>
+        {% if animo_hoy %}
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="display-4 fw-bold text-danger">{{ animo_hoy.valor }}</span>
+            <div>
+              <span class="text-muted">/10</span><br>
+              <span class="fw-semibold">{{ animo_hoy.get_etiqueta }}</span>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-auto flex-wrap">
+            <a href="{% url 'cuentas:registrar_animo' %}" class="btn btn-outline-danger btn-sm">
+              Actualizar
+            </a>
+            <a href="{% url 'cuentas:calendario_animo' %}" class="btn btn-outline-danger btn-sm">
+              Ver calendario
+            </a>
+          </div>
+        {% else %}
+          <p class="text-muted mb-3">Aún no has registrado cómo te sientes hoy.</p>
+          <div class="d-flex gap-2 mt-auto flex-wrap">
+            <a href="{% url 'cuentas:registrar_animo' %}" class="btn btn-danger btn-sm">
+              Registrar
+            </a>
+            <a href="{% url 'cuentas:calendario_animo' %}" class="btn btn-outline-danger btn-sm">
+              Ver calendario
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
