@@ -10,7 +10,7 @@
     {% if cuestionario.estado == 'borrador' %}
       <span class="badge bg-secondary">Borrador</span>
     {% elif cuestionario.estado == 'en_revision' %}
-      <span class="badge bg-warning text-dark">En revision</span>
+      <span class="badge bg-warning text-dark">En revisión</span>
     {% elif cuestionario.estado == 'aprobado' %}
       <span class="badge bg-success">Aprobado</span>
     {% elif cuestionario.estado == 'rechazado' %}
@@ -22,7 +22,7 @@
         {% csrf_token %}
         <button type="submit" class="btn btn-sm btn-warning"
           {% if preguntas|length == 0 %}disabled title="Agrega al menos una pregunta"{% endif %}>
-          Enviar a revision
+          Enviar a revisión
         </button>
       </form>
     {% endif %}
@@ -31,11 +31,11 @@
 
 {% if cuestionario.estado == 'rechazado' %}
 <div class="alert alert-danger mt-2">
-  Este cuestionario fue rechazado. Corrige las preguntas y vuelvelo a enviar.
+  Este cuestionario fue rechazado. Corrige las preguntas y vuélvelo a enviar.
 </div>
 {% elif cuestionario.estado == 'en_revision' %}
 <div class="alert alert-warning mt-2">
-  Este cuestionario esta en revision. No puedes editarlo hasta que el administrador lo revise.
+  Este cuestionario está en revisión. No puedes editarlo hasta que el administrador lo revise.
 </div>
 {% endif %}
 
@@ -44,7 +44,17 @@
 <div class="row mt-3">
   <!-- Lista de preguntas -->
   <div class="{% if cuestionario.estado == 'borrador' or cuestionario.estado == 'rechazado' %}col-md-7{% else %}col-12{% endif %}">
-    <h5>Preguntas ({{ preguntas|length }})</h5>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Preguntas ({{ preguntas|length }})</h5>
+      {% if cuestionario.subtipo == 'personalizado' and preguntas|length > 1 %}
+        {% if cuestionario.estado == 'borrador' or cuestionario.estado == 'rechazado' %}
+        <a href="{% url 'cuestionarios:reordenar_preguntas' cuestionario.pk %}"
+           class="btn btn-sm btn-outline-secondary">
+          ⠿ Reordenar
+        </a>
+        {% endif %}
+      {% endif %}
+    </div>
     {% if preguntas %}
     <ul class="list-group">
       {% for p in preguntas %}
@@ -70,7 +80,7 @@
       {% endfor %}
     </ul>
     {% else %}
-    <div class="alert alert-info">Aun no hay preguntas. Agrega la primera.</div>
+    <div class="alert alert-info">Aún no hay preguntas. Agrega la primera.</div>
     {% endif %}
   </div>
 
@@ -81,7 +91,7 @@
     <div class="card shadow-sm mb-3">
       <div class="card-body">
         <h6 class="mb-3">Agregar pregunta</h6>
-        <form method="post">
+        <form method="post" id="form-pregunta">
           {% csrf_token %}
           <div class="mb-3">
             <label class="form-label">Texto de la pregunta</label>
@@ -94,14 +104,60 @@
             <label class="form-label">Tipo de respuesta</label>
             {{ form.escala }}
           </div>
-          <div class="mb-3">
-            <label class="form-label">Peso (1 a 10)</label>
+
+          <!-- Etiquetas para tipo binario -->
+          <div id="campos-binario" class="mb-3" style="display:none;">
+            <label class="form-label small fw-semibold">Etiquetas personalizadas</label>
+            <div class="d-flex gap-2">
+              <div class="w-50">
+                <label class="form-label small">Opción 1 (valor 0)</label>
+                {{ form.etiqueta_opcion_1 }}
+                {% if form.etiqueta_opcion_1.errors %}
+                  <div class="text-danger small">{{ form.etiqueta_opcion_1.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+              <div class="w-50">
+                <label class="form-label small">Opción 2 (valor 1)</label>
+                {{ form.etiqueta_opcion_2 }}
+                {% if form.etiqueta_opcion_2.errors %}
+                  <div class="text-danger small">{{ form.etiqueta_opcion_2.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Peso (oculto para tipos sin puntaje) -->
+          <div id="campo-peso" class="mb-3">
+            <label class="form-label">Peso (0 a 10)</label>
             {{ form.peso }}
           </div>
+          <div id="aviso-sin-puntaje" class="alert alert-info small py-2" style="display:none;">
+            Este tipo de pregunta no suma al puntaje total.
+          </div>
+
           <button type="submit" class="btn btn-danger w-100">Agregar pregunta</button>
         </form>
       </div>
     </div>
+
+    <script>
+      const escalaSelect = document.getElementById('id_escala');
+      const camposBinario = document.getElementById('campos-binario');
+      const campoPeso = document.getElementById('campo-peso');
+      const avisoSinPuntaje = document.getElementById('aviso-sin-puntaje');
+      const SIN_PUNTAJE = ['texto', 'fecha'];
+
+      function actualizarCampos() {
+        const val = escalaSelect.value;
+        camposBinario.style.display = (val === 'binario') ? 'block' : 'none';
+        const sinPuntaje = SIN_PUNTAJE.includes(val);
+        campoPeso.style.display = sinPuntaje ? 'none' : 'block';
+        avisoSinPuntaje.style.display = sinPuntaje ? 'block' : 'none';
+      }
+
+      escalaSelect.addEventListener('change', actualizarCampos);
+      actualizarCampos();
+    </script>
 
     <!-- Importar pregunta de otro cuestionario -->
     {% if preguntas_importables %}
