@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% block titulo %}Panel de Administración — PsicoApp{% endblock %}
+
+{% block contenido %}
+<style>
+  .stat-card        { border-left: 4px solid #C0392B; border-radius: 8px; }
+  .stat-number      { font-size: 2.2rem; font-weight: 700; color: #C0392B; }
+  .badge-pendiente  { background-color: #C0392B; }
+  .btn-aprobar      { background-color: #C0392B; border-color: #C0392B; color: white; }
+  .btn-aprobar:hover{ background-color: #922B21; border-color: #922B21; color: white; }
+  .section-title    { border-bottom: 2px solid #C0392B; padding-bottom: 6px; color: #922B21; }
+  .table thead      { background-color: #C0392B; color: white; }
+  .estado-activo    { color: #155724; font-weight: 600; }
+  .estado-pendiente { color: #856404; font-weight: 600; }
+  .estado-rechazado { color: #721c24; font-weight: 600; }
+  .estado-inactivo  { color: #6c757d; font-weight: 600; }
+</style>
+
+<!-- Encabezado -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-0 fw-bold">Panel de Administración</h2>
+    <small class="text-muted">Bienvenido, {{ user.get_full_name|default:user.username }}</small>
+  </div>
+  <a href="{% url 'mantenedores:terminos' %}" class="btn btn-outline-danger">
+    Gestionar Términos y Condiciones
+  </a>
+</div>
+
+<!-- Tarjetas de estadísticas -->
+<div class="row g-3 mb-5">
+  <div class="col-md-3">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <p class="text-muted mb-1 small">Pacientes registrados</p>
+        <div class="stat-number">{{ total_pacientes }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <p class="text-muted mb-1 small">Especialistas activos</p>
+        <div class="stat-number">{{ total_especialistas }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body d-flex justify-content-between align-items-start">
+        <div>
+          <p class="text-muted mb-1 small">Solicitudes pendientes</p>
+          <div class="stat-number">{{ total_pendientes }}</div>
+        </div>
+        {% if total_pendientes > 0 %}
+          <span class="badge badge-pendiente rounded-pill mt-1">!</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <p class="text-muted mb-1 small">Cuestionarios creados</p>
+        <div class="stat-number">{{ total_cuestionarios }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CUESTIONARIOS EN REVISIÓN ═══ -->
+<h5 class="section-title mb-3">
+  Cuestionarios en revisión
+  {% if en_revision %}
+    <span class="badge bg-danger ms-2">{{ en_revision|length }}</span>
+  {% endif %}
+</h5>
+{% if en_revision %}
+<div class="card shadow-sm mb-5">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Especialista</th>
+          <th>Tipo</th>
+          <th>Preguntas</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in en_revision %}
+        <tr>
+          <td class="align-middle fw-semibold">{{ c.nombre }}</td>
+          <td class="align-middle">{{ c.especialista.get_full_name|default:c.especialista.username }}</td>
+          <td class="align-middle">
+            <span class="badge bg-light text-dark border">{{ c.get_subtipo_display }}</span>
+          </td>
+          <td class="align-middle text-center">{{ c.cantidad_preguntas_activas }}</td>
+          <td class="align-middle">
+            <a href="{% url 'cuestionarios:revisar_cuestionario' c.pk %}"
+               class="btn btn-aprobar btn-sm">Revisar</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-light border mb-5">No hay cuestionarios pendientes de revisión.</div>
+{% endif %}
+
+<!-- ═══ SOLICITUDES DE REGISTRO PENDIENTES ═══ -->
+{% if pendientes %}
+<h5 class="section-title mb-3">Solicitudes de registro pendientes</h5>
+<div class="card shadow-sm mb-5">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Especialidad</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for esp in pendientes %}
+        <tr>
+          <td class="align-middle">{{ esp.get_full_name|default:esp.username }}</td>
+          <td class="align-middle">{{ esp.email }}</td>
+          <td class="align-middle">{{ esp.especialidad|default:"—" }}</td>
+          <td class="align-middle">
+            <form method="post" action="{% url 'cuentas:aprobar_especialista' esp.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-aprobar btn-sm me-1">Aprobar</button>
+            </form>
+            <a href="{% url 'cuentas:rechazar_especialista' esp.pk %}"
+               class="btn btn-outline-secondary btn-sm">Rechazar</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ═══ GESTIÓN DE ESPECIALISTAS ═══ -->
+<h5 class="section-title mb-3">Especialistas</h5>
+<div class="card shadow-sm mb-5">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Especialidad</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for esp in especialistas %}
+        <tr>
+          <td class="align-middle">{{ esp.get_full_name|default:esp.username }}</td>
+          <td class="align-middle">{{ esp.email }}</td>
+          <td class="align-middle">{{ esp.especialidad|default:"—" }}</td>
+          <td class="align-middle">
+            {% if esp.estado == 'activo' %}
+              <span class="estado-activo">● Activo</span>
+            {% elif esp.estado == 'pendiente' %}
+              <span class="estado-pendiente">● Pendiente</span>
+            {% elif esp.estado == 'inactivo' %}
+              <span class="estado-inactivo">● Inactivo</span>
+            {% else %}
+              <span class="estado-rechazado">● Rechazado</span>
+            {% endif %}
+          </td>
+          <td class="align-middle">
+            <div class="d-flex flex-wrap gap-1">
+              {% if esp.estado == 'pendiente' %}
+                <form method="post" action="{% url 'cuentas:aprobar_especialista' esp.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-aprobar btn-sm">Aprobar</button>
+                </form>
+                <a href="{% url 'cuentas:rechazar_especialista' esp.pk %}"
+                   class="btn btn-outline-secondary btn-sm">Rechazar</a>
+
+              {% elif esp.estado == 'activo' %}
+                <form method="post" action="{% url 'cuentas:desactivar_usuario' esp.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-warning btn-sm"
+                    onclick="return confirm('¿Desactivar la cuenta de {{ esp.get_full_name|default:esp.username }}?')">
+                    Desactivar
+                  </button>
+                </form>
+
+              {% elif esp.estado == 'inactivo' or esp.estado == 'rechazado' %}
+                <form method="post" action="{% url 'cuentas:reactivar_usuario' esp.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-success btn-sm">Reactivar</button>
+                </form>
+              {% endif %}
+
+              {% if esp.pk != user.pk %}
+              <form method="post" action="{% url 'cuentas:eliminar_usuario' esp.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm"
+                  onclick="return confirm('¿Eliminar permanentemente la cuenta de {{ esp.get_full_name|default:esp.username }}? Esta acción no se puede deshacer.')">
+                  Eliminar
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-3">No hay especialistas registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ GESTIÓN DE PACIENTES ═══ -->
+<h5 class="section-title mb-3">Pacientes</h5>
+<div class="card shadow-sm mb-4">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pac in pacientes %}
+        <tr>
+          <td class="align-middle">{{ pac.get_full_name|default:pac.username }}</td>
+          <td class="align-middle">{{ pac.email }}</td>
+          <td class="align-middle">
+            {% if pac.estado == 'activo' %}
+              <span class="estado-activo">● Activo</span>
+            {% elif pac.estado == 'inactivo' %}
+              <span class="estado-inactivo">● Inactivo</span>
+            {% else %}
+              <span class="text-muted">● {{ pac.get_estado_display }}</span>
+            {% endif %}
+          </td>
+          <td class="align-middle">
+            <div class="d-flex flex-wrap gap-1">
+              {% if pac.estado == 'activo' %}
+                <form method="post" action="{% url 'cuentas:desactivar_usuario' pac.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-warning btn-sm"
+                    onclick="return confirm('¿Desactivar la cuenta de {{ pac.get_full_name|default:pac.username }}?')">
+                    Desactivar
+                  </button>
+                </form>
+              {% else %}
+                <form method="post" action="{% url 'cuentas:reactivar_usuario' pac.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-success btn-sm">Reactivar</button>
+                </form>
+              {% endif %}
+
+              <form method="post" action="{% url 'cuentas:eliminar_usuario' pac.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm"
+                  onclick="return confirm('¿Eliminar permanentemente la cuenta de {{ pac.get_full_name|default:pac.username }}? Esta acción no se puede deshacer.')">
+                  Eliminar
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center text-muted py-3">No hay pacientes registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
