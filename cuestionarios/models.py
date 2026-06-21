@@ -25,8 +25,6 @@ class Cuestionario(models.Model):
         (SUBTIPO_PSS10, 'PSS-10 (Estrés percibido)'),
         (SUBTIPO_PHQ9, 'PHQ-9 (Depresión)'),
     ]
-
-    # especialista=None indica plantilla del sistema
     especialista = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -54,8 +52,6 @@ class Cuestionario(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.get_estado_display()})"
-
-
 class Pregunta(models.Model):
     ESCALA_LIKERT_4 = 'likert4'
     ESCALA_LIKERT_5 = 'likert5'
@@ -67,7 +63,6 @@ class Pregunta(models.Model):
     ESCALA_BINARIO = 'binario'
     ESCALA_FECHA = 'fecha'
     ESCALA_VF = 'verdadero_falso'
-
     ESCALAS = [
         (ESCALA_LIKERT_4, 'Likert 0 a 3 (Nunca → Siempre)'),
         (ESCALA_LIKERT_5, 'Likert 0 a 4 (Nunca → Casi siempre)'),
@@ -80,12 +75,8 @@ class Pregunta(models.Model):
         (ESCALA_FECHA, 'Fecha y hora (sin puntaje)'),
         (ESCALA_VF, 'Verdadero / Falso'),
     ]
-
-    # Tipos que no suman al puntaje
     ESCALAS_SIN_PUNTAJE = {ESCALA_TEXTO, ESCALA_FECHA}
-    # Tipos cuya respuesta se guarda como texto libre
     ESCALAS_VALOR_TEXTO = {ESCALA_TEXTO, ESCALA_FECHA}
-
     cuestionario = models.ForeignKey(
         Cuestionario,
         on_delete=models.CASCADE,
@@ -96,22 +87,17 @@ class Pregunta(models.Model):
     peso = models.IntegerField(default=1)
     orden = models.IntegerField(default=0)
     activa = models.BooleanField(default=True)
-    # Solo para tipo 'binario': etiquetas que define el especialista
     etiqueta_opcion_1 = models.CharField(max_length=100, blank=True, default='')
     etiqueta_opcion_2 = models.CharField(max_length=100, blank=True, default='')
-    # Para PSS-10: algunos ítems se invierten antes de sumar (0↔4, 1↔3)
+    # esto es para el cuestionario  PSS-10 
     invertir = models.BooleanField(
         default=False,
         help_text='Si está activo, el valor se invierte (4 - valor) antes de calcular el puntaje.'
     )
-
     class Meta:
         ordering = ['orden', 'id']
-
     def __str__(self):
         return self.texto[:50]
-
-
 class AsignacionCuestionario(models.Model):
     """El especialista elige qué cuestionarios ve cada paciente."""
     especialista = models.ForeignKey(
@@ -137,8 +123,6 @@ class AsignacionCuestionario(models.Model):
 
     def __str__(self):
         return f"{self.cuestionario.nombre} → {self.paciente.username}"
-
-
 class RespuestaCuestionario(models.Model):
     """Una sesión de respuesta de un paciente a un cuestionario."""
     paciente = models.ForeignKey(
@@ -203,8 +187,6 @@ class RespuestaCuestionario(models.Model):
 
     def __str__(self):
         return f"{self.paciente.username} — {self.cuestionario.nombre} ({self.fecha_respuesta:%d/%m/%Y})"
-
-
 class AsignacionPendiente(models.Model):
     """Cuestionarios pre-asignados a un paciente que aún no se ha registrado."""
     especialista = models.ForeignKey(

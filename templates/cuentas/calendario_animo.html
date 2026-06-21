@@ -60,12 +60,12 @@
 
 <!-- Navegación de mes -->
 <div class="d-flex align-items-center justify-content-center gap-3 mb-4">
-  <a href="?mes={{ mes_ant }}&anio={{ anio_ant }}"
+  <a href="?mes={{ mes_ant }}&año={{ año_ant }}"
      class="btn btn-outline-danger btn-sm px-3">&#8249;</a>
   <h5 class="mb-0 fw-bold" style="min-width:160px; text-align:center;">
-    {{ nombre_mes }} {{ anio }}
+    {{ nombre_mes }} {{ año }}
   </h5>
-  <a href="?mes={{ mes_sig }}&anio={{ anio_sig }}"
+  <a href="?mes={{ mes_sig }}&año={{ año_sig }}"
      class="btn btn-outline-danger btn-sm px-3">&#8250;</a>
 </div>
 
@@ -82,25 +82,25 @@
       {% elif registro %}
         {% if registro.valor >= 8 %}
           {% with nivel="nivel-alto" %}
-          <div class="cal-day {{ nivel }}{% if hoy.day == dia and hoy.month == mes and hoy.year == anio %} hoy-mark{% endif %}"
-               title="{{ dia }}/{{ mes }}/{{ anio }} — {{ registro.valor }}/10 ({{ registro.get_etiqueta }})">
+          <div class="cal-day {{ nivel }}{% if hoy.day == dia and hoy.month == mes and hoy.year == año %} hoy-mark{% endif %}"
+               title="{{ dia }}/{{ mes }}/{{ año }} — {{ registro.valor }}/10 ({{ registro.get_etiqueta }})">
             {{ dia }}
           </div>
           {% endwith %}
         {% elif registro.valor >= 5 %}
-          <div class="cal-day nivel-medio{% if hoy.day == dia and hoy.month == mes and hoy.year == anio %} hoy-mark{% endif %}"
-               title="{{ dia }}/{{ mes }}/{{ anio }} — {{ registro.valor }}/10 ({{ registro.get_etiqueta }})">
+          <div class="cal-day nivel-medio{% if hoy.day == dia and hoy.month == mes and hoy.year == año %} hoy-mark{% endif %}"
+               title="{{ dia }}/{{ mes }}/{{ año }} — {{ registro.valor }}/10 ({{ registro.get_etiqueta }})">
             {{ dia }}
           </div>
         {% else %}
-          <div class="cal-day nivel-bajo{% if hoy.day == dia and hoy.month == mes and hoy.year == anio %} hoy-mark{% endif %}"
-               title="{{ dia }}/{{ mes }}/{{ anio }} — {{ registro.valor }}/10 ({{ registro.get_etiqueta }})">
+          <div class="cal-day nivel-bajo{% if hoy.day == dia and hoy.month == mes and hoy.year == año %} hoy-mark{% endif %}"
+               title="{{ dia }}/{{ mes }}/{{ año }} — {{ registro.valor }}/10 ({{ registro.get_etiqueta }})">
             {{ dia }}
           </div>
         {% endif %}
       {% else %}
-        <div class="cal-day sin-registro{% if hoy.day == dia and hoy.month == mes and hoy.year == anio %} hoy-mark{% endif %}"
-             title="{{ dia }}/{{ mes }}/{{ anio }} — Sin registro">
+        <div class="cal-day sin-registro{% if hoy.day == dia and hoy.month == mes and hoy.year == año %} hoy-mark{% endif %}"
+             title="{{ dia }}/{{ mes }}/{{ año }} — Sin registro">
           {{ dia }}
         </div>
       {% endif %}
