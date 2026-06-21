@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block titulo %}Estado de ánimo — PsicoApp{% endblock %}
+
+{% block contenido %}
+<style>
+  .animo-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 3px solid #dee2e6;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s ease;
+    background: white;
+    color: #555;
+  }
+  .animo-btn:hover { transform: scale(1.15); }
+  .animo-btn.selected {
+    border-color: #C0392B;
+    background: #C0392B;
+    color: white;
+    transform: scale(1.2);
+    box-shadow: 0 0 0 4px rgba(192,57,43,.25);
+  }
+  .etiqueta-animo {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #C0392B;
+    min-height: 1.6rem;
+  }
+  .escala-leyenda {
+    display: flex;
+    justify-content: space-between;
+    font-size: .8rem;
+    color: #888;
+    margin-top: 6px;
+  }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-bold mb-0">¿Cómo te sientes hoy?</h2>
+  <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-outline-secondary btn-sm">← Volver</a>
+</div>
+
+{% if messages %}
+  {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show">
+      {{ msg }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div class="card shadow-sm mx-auto" style="max-width:560px;">
+  <div class="card-body p-4">
+    <p class="text-muted mb-1">Fecha: <strong>{{ hoy|date:"d \d\e F \d\e Y" }}</strong></p>
+
+    {% if registro_hoy %}
+    <div class="alert alert-light border mb-3">
+      Ya registraste <strong>{{ registro_hoy.valor }}/10</strong>
+      ({{ registro_hoy.get_etiqueta }}) hoy. Puedes actualizarlo.
+    </div>
+    {% endif %}
+
+    <form method="post" id="form-animo">
+      {% csrf_token %}
+      <input type="hidden" name="valor" id="valor-input" value="{{ registro_hoy.valor|default:'' }}">
+
+      <p class="fw-semibold mb-3">Selecciona tu estado (1 = Muy mal, 10 = Excelente):</p>
+
+      <div class="d-flex justify-content-between mb-2">
+        {% for n in rango %}
+        <button type="button"
+                class="animo-btn {% if registro_hoy.valor == n %}selected{% endif %}"
+                data-val="{{ n }}"
+                onclick="seleccionar({{ n }})">
+          {{ n }}
+        </button>
+        {% endfor %}
+      </div>
+
+      <div class="escala-leyenda">
+        <span>😞 Muy mal</span>
+        <span>😐 Regular</span>
+        <span>😄 Excelente</span>
+      </div>
+
+      <div class="text-center mt-3 etiqueta-animo" id="etiqueta-texto">
+        {% if registro_hoy %}{{ registro_hoy.get_etiqueta }}{% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-danger w-100 mt-4" id="btn-guardar"
+              {% if not registro_hoy %}disabled{% endif %}>
+        {% if registro_hoy %}Actualizar estado de ánimo{% else %}Guardar estado de ánimo{% endif %}
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const etiquetas = {
+    1: 'Muy mal', 2: 'Muy mal', 3: 'Mal', 4: 'Mal',
+    5: 'Regular', 6: 'Regular', 7: 'Bien', 8: 'Bien',
+    9: 'Excelente', 10: 'Excelente'
+  };
+
+  function seleccionar(n) {
+    document.querySelectorAll('.animo-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector(`.animo-btn[data-val="${n}"]`).classList.add('selected');
+    document.getElementById('valor-input').value = n;
+    document.getElementById('etiqueta-texto').textContent = etiquetas[n] || '';
+    const btn = document.getElementById('btn-guardar');
+    btn.disabled = false;
+    btn.textContent = 'Guardar estado de ánimo';
+  }
+</script>
+{% endblock %}
