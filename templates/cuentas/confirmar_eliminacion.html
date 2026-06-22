@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}Eliminar cuenta — PsicoApp{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+
+    <div class="card border-danger shadow-sm">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">⚠ Eliminar mi cuenta</h5>
+      </div>
+      <div class="card-body">
+
+        <p class="text-muted mb-3">
+          Esta acción es <strong>permanente e irrecuperable</strong>. Una vez confirmada:
+        </p>
+        <ul class="text-muted small mb-4">
+          <li>Tu nombre, correo y datos personales serán eliminados.</li>
+          <li>Tus respuestas a cuestionarios quedarán anonimizadas.</li>
+          <li>Tu sesión se cerrará y no podrás recuperar el acceso.</li>
+          <li>Tu especialista recibirá una notificación.</li>
+        </ul>
+
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="alert alert-{{ msg.tags }} py-2">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Confirma tu contraseña actual</label>
+            <input type="password" name="password" class="form-control"
+                   placeholder="Contraseña actual" autofocus required>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-danger">
+              Sí, eliminar mi cuenta permanentemente
+            </button>
+            <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-outline-secondary">
+              Cancelar
+            </a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
