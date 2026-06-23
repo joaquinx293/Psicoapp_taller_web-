@@ -53,6 +53,10 @@
                    class="btn btn-sm btn-outline-danger">
                   Calendario
                 </a>
+                <a href="{% url 'gestion_usuarios:pregunta_diaria' inv.paciente.pk %}"
+                   class="btn btn-sm btn-outline-danger">
+                  Pregunta diaria
+                </a>
               </div>
             {% elif inv.estado == 'pendiente' %}
               <a href="{% url 'cuestionarios:asignar_pendiente' inv.pk %}"

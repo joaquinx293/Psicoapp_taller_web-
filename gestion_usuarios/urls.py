@@ -11,4 +11,7 @@ urlpatterns = [
     # HU-003: activación por PIN (2 pasos)
     path('activar/', views.ingresar_pin, name='ingresar_pin'),
     path('activar/completar/', views.completar_registro, name='completar_registro'),
+
+    # HU-025: Configurar pregunta diaria por paciente
+    path('pacientes/<int:paciente_id>/pregunta-diaria/', views.pregunta_diaria, name='pregunta_diaria'),
 ]
