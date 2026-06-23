@@ -8,8 +8,6 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
 from ..models import Notificacion, RegistroAnimo, Usuario
-
-
 @login_required
 @require_http_methods(["GET", "POST"])
 def confirmar_eliminacion(request):
@@ -25,7 +23,6 @@ def confirmar_eliminacion(request):
 
         paciente = request.user
 
-        # Notificar al especialista ANTES de anonimizar
         nombre_display = paciente.get_full_name() or paciente.username
         try:
             invitacion = paciente.invitacion_recibida
@@ -34,14 +31,12 @@ def confirmar_eliminacion(request):
                     destinatario=invitacion.especialista,
                     mensaje=(
                         f'El paciente {nombre_display} ha solicitado la eliminación '
-                        f'de su cuenta. Sus datos personales han sido anonimizados '
-                        f'y sus respuestas a cuestionarios se conservan sin identificación.'
+                        f'de su cuenta los datos personales han sido anonimizados '
+                        f'y sus respuestas a cuestionarios se conservan pero no se guarda su nombre.'
                     ),
                 )
         except Exception:
-            pass  # Sin invitación o especialista, continuar igual
-
-        # Anonimizar datos identificables
+            pass 
         uid = uuid.uuid4().hex[:10]
         paciente.username = f'anonimo_{uid}'
         paciente.first_name = ''
@@ -53,15 +48,9 @@ def confirmar_eliminacion(request):
         paciente.is_active = False
         paciente.set_unusable_password()
         paciente.save()
-
-        # Eliminar registros personales (estado de ánimo)
         RegistroAnimo.objects.filter(paciente=paciente).delete()
-
-        # Eliminar asignaciones de cuestionarios
         from cuestionarios.models import AsignacionCuestionario
         AsignacionCuestionario.objects.filter(paciente=paciente).delete()
-
-        # Cerrar sesión y redirigir
         logout(request)
         return redirect('cuentas:cuenta_eliminada')
 

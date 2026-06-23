@@ -5,3 +5,6 @@ from .dashboard_admin import dashboard_admin, aprobar_especialista, rechazar_esp
 from .gestionar_usuario import desactivar_usuario, reactivar_usuario, eliminar_usuario  # gestión de cuentas
 from .estado_animo import registrar_animo  # HU-022
 from .calendario_animo import calendario_animo  # HU-024
+from .eliminar_cuenta import confirmar_eliminacion, cuenta_eliminada  # HU-010
+from .pregunta_diaria_paciente import responder_pregunta_diaria, historial_pregunta_diaria  # HU-026
+from .recordatorio import configurar_recordatorio  # HU-027

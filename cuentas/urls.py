@@ -23,6 +23,17 @@ urlpatterns = [
     path('admin-dashboard/reactivar/<int:pk>/', views.reactivar_usuario, name='reactivar_usuario'),
     path('admin-dashboard/eliminar/<int:pk>/', views.eliminar_usuario, name='eliminar_usuario'),
 
+    # HU-027: Recordatorio diario por correo
+    path('recordatorio/', views.configurar_recordatorio, name='configurar_recordatorio'),
+
+    # HU-026: Responder pregunta diaria
+    path('pregunta-diaria/', views.responder_pregunta_diaria, name='responder_pregunta_diaria'),
+    path('pregunta-diaria/historial/', views.historial_pregunta_diaria, name='historial_pregunta_diaria'),
+
+    # HU-010: Eliminar cuenta con anonimización
+    path('eliminar-cuenta/', views.confirmar_eliminacion, name='confirmar_eliminacion'),
+    path('cuenta-eliminada/', views.cuenta_eliminada, name='cuenta_eliminada'),
+
     # HU-022: Registrar estado de ánimo diario
     path('animo/', views.registrar_animo, name='registrar_animo'),
 
