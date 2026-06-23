@@ -6,6 +6,8 @@
   <a href="{% url 'gestion_usuarios:invitar_paciente' %}" class="btn btn-danger">+ Invitar paciente</a>
 </div>
 
+
+
 {% if invitaciones %}
 <div class="card shadow-sm">
   <div class="table-responsive">
@@ -20,6 +22,8 @@
         </tr>
       </thead>
       <tbody>
+
+
         {% for inv in invitaciones %}
         <tr>
           <td>{{ inv.nombre_paciente }}</td>
@@ -42,13 +46,21 @@
                   Asignar
                 </a>
                 <a href="{% url 'cuestionarios:ver_respuestas_paciente' inv.paciente.pk %}"
-                   class="btn btn-sm btn-outline-secondary">
+                   class="btn btn-sm btn-outline-danger">
                   Ver respuestas
+                </a>
+                <a href="{% url 'cuentas:calendario_animo_paciente' inv.paciente.pk %}"
+                   class="btn btn-sm btn-outline-danger">
+                  Calendario
+                </a>
+                <a href="{% url 'gestion_usuarios:pregunta_diaria' inv.paciente.pk %}"
+                   class="btn btn-sm btn-outline-danger">
+                  Pregunta diaria
                 </a>
               </div>
             {% elif inv.estado == 'pendiente' %}
               <a href="{% url 'cuestionarios:asignar_pendiente' inv.pk %}"
-                 class="btn btn-sm btn-outline-warning">
+                 class="btn btn-sm btn-outline-danger">
                 Precargar tests
               </a>
             {% else %}
@@ -63,7 +75,7 @@
 </div>
 {% else %}
 <div class="alert alert-info">
-  Aún no has invitado a ningún paciente.
+  Aún no has invitado ningún paciente
   <a href="{% url 'gestion_usuarios:invitar_paciente' %}">Invita al primero</a>.
 </div>
 {% endif %}
