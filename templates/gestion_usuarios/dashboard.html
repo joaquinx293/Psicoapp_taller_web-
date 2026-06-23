@@ -2,6 +2,21 @@
 {% block titulo %}Inicio - Especialista{% endblock %}
 {% block contenido %}
 <h2 class="mb-4">Bienvenido, {{ user.first_name }}</h2>
+
+{% if notificaciones %}
+<div class="mb-4">
+  {% for n in notificaciones %}
+  <div class="alert alert-warning d-flex align-items-start gap-2" role="alert">
+    <span>🔔</span>
+    <div>
+      <strong>Notificación</strong> — {{ n.fecha|date:"d/m/Y H:i" }}<br>
+      {{ n.mensaje }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <div class="row g-3">
   <div class="col-md-4">
     <div class="card shadow-sm">

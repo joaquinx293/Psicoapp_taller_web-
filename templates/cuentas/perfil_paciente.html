@@ -27,5 +27,127 @@
       </div>
     </div>
   </div>
+
+  <!-- HU-026: Pregunta diaria -->
+  {% if pregunta_diaria %}
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title">Pregunta de hoy</h5>
+        <p class="fw-semibold mb-3">{{ pregunta_diaria.texto }}</p>
+        {% if pregunta_ya_respondida %}
+          <p class="text-muted mb-0 mt-auto">✓ Ya respondiste la pregunta de hoy.</p>
+          <a href="{% url 'cuentas:historial_pregunta_diaria' %}"
+             class="btn btn-outline-danger btn-sm mt-2 align-self-start">
+            Ver historial
+          </a>
+        {% else %}
+          <div class="d-flex gap-2 mt-auto flex-wrap">
+            <a href="{% url 'cuentas:responder_pregunta_diaria' %}" class="btn btn-danger btn-sm">
+              Responder
+            </a>
+            <a href="{% url 'cuentas:historial_pregunta_diaria' %}" class="btn btn-outline-danger btn-sm">
+              Ver historial
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- HU-022  y HU-024 para el  Estado de ánimo -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title">Estado de ánimo de hoy</h5>
+        {% if animo_hoy %}
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="display-4 fw-bold text-danger">{{ animo_hoy.valor }}</span>
+            <div>
+              <span class="text-muted">/10</span><br>
+              <span class="fw-semibold">{{ animo_hoy.get_etiqueta }}</span>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-auto flex-wrap">
+            <a href="{% url 'cuentas:registrar_animo' %}" class="btn btn-outline-danger btn-sm">
+              Actualizar
+            </a>
+            <a href="{% url 'cuentas:calendario_animo' %}" class="btn btn-outline-danger btn-sm">
+              Ver calendario
+            </a>
+          </div>
+        {% else %}
+          <p class="text-muted mb-3">Aún no has registrado cómo te sientes hoy.</p>
+          <div class="d-flex gap-2 mt-auto flex-wrap">
+            <a href="{% url 'cuentas:registrar_animo' %}" class="btn btn-danger btn-sm">
+              Registrar
+            </a>
+            <a href="{% url 'cuentas:calendario_animo' %}" class="btn btn-outline-danger btn-sm">
+              Ver calendario
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- HU-027: Recordatorio diario por correo -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title">Recordatorio por correo</h5>
+
+        {% if recordatorio and recordatorio.activo %}
+          <p class="text-muted mb-1">
+            Activo — envío a las <strong>{{ recordatorio.hora|time:"H:i" }}</strong>
+          </p>
+          <p class="text-muted small mb-3">
+            Recibirás un correo si no has registrado tu ánimo antes de esa hora.
+          </p>
+          <div class="d-flex gap-2 flex-wrap mt-auto">
+            <form method="post" action="{% url 'cuentas:configurar_recordatorio' %}" class="d-flex gap-2 align-items-center">
+              {% csrf_token %}
+              <input type="hidden" name="accion" value="guardar">
+              <input type="time" name="hora" value="{{ recordatorio.hora|time:'H:i' }}"
+                     class="form-control form-control-sm" style="width:110px;" required>
+              <button type="submit" class="btn btn-sm btn-outline-danger">Cambiar hora</button>
+            </form>
+            <form method="post" action="{% url 'cuentas:configurar_recordatorio' %}">
+              {% csrf_token %}
+              <input type="hidden" name="accion" value="desactivar">
+              <button type="submit" class="btn btn-sm btn-outline-secondary">Desactivar</button>
+            </form>
+          </div>
+        {% else %}
+          <p class="text-muted mb-3">
+            Recibe un correo diario para recordarte registrar tu estado de ánimo.
+          </p>
+          <form method="post" action="{% url 'cuentas:configurar_recordatorio' %}" class="mt-auto">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="guardar">
+            <div class="d-flex gap-2 align-items-center">
+              <input type="time" name="hora" value="09:00"
+                     class="form-control form-control-sm" style="width:110px;" required>
+              <button type="submit" class="btn btn-danger btn-sm">Activar</button>
+            </div>
+          </form>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="mt-5">
+<div class="mt-3">
+  <h5 class="text-danger">Eliminar cuenta</h5>
+  <p class="text-muted small">
+    Al eliminar tu cuenta, tus datos personales serán borrados de forma permanente y 
+    tus respuestas a cuestionarios se conservarán de forma anonimizada para fines estadísticos.
+  </p>
+  <a href="{% url 'cuentas:confirmar_eliminacion' %}" class="btn btn-outline-danger btn-sm">
+    Eliminar mi cuenta
+  </a>
 </div>
 {% endblock %}
