@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block titulo %}Revisar cuestionario — {{ cuestionario.nombre }}{% endblock %}
+
+{% block contenido %}
+<style>
+  .section-title { border-bottom: 2px solid #C0392B; padding-bottom: 6px; color: #922B21; }
+  .table thead   { background-color: #C0392B; color: white; }
+</style>
+
+<a href="{% url 'cuentas:dashboard_admin' %}" class="text-muted small">&larr; Volver al panel</a>
+
+<div class="d-flex justify-content-between align-items-center mt-2 mb-4">
+  <div>
+    <h2 class="mb-0">{{ cuestionario.nombre }}</h2>
+    <span class="text-muted small">
+      Enviado por {{ cuestionario.especialista.get_full_name|default:cuestionario.especialista.username }}
+      &mdash; {{ cuestionario.fecha_creacion|date:"d/m/Y" }}
+    </span>
+  </div>
+  <span class="badge bg-warning text-dark fs-6">En revisión</span>
+</div>
+
+{% if cuestionario.descripcion %}
+<p class="text-muted mb-4">{{ cuestionario.descripcion }}</p>
+{% endif %}
+
+<!-- Lista de preguntas -->
+<h5 class="section-title mb-3">Preguntas ({{ preguntas|length }})</h5>
+{% if preguntas %}
+<div class="card shadow-sm mb-5">
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr>
+          <th class="ps-3">#</th>
+          <th>Pregunta</th>
+          <th class="text-center">Tipo</th>
+          <th class="text-center">Peso</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in preguntas %}
+        <tr>
+          <td class="ps-3 text-muted align-middle">{{ forloop.counter }}</td>
+          <td class="align-middle">
+            {{ p.texto }}
+            {% if p.escala == 'binario' and p.etiqueta_opcion_1 %}
+              <br><small class="text-muted">
+                Opciones: "{{ p.etiqueta_opcion_1 }}" (0) / "{{ p.etiqueta_opcion_2 }}" (1)
+              </small>
+            {% endif %}
+          </td>
+          <td class="text-center align-middle">
+            <span class="badge bg-light text-dark border">{{ p.get_escala_display }}</span>
+          </td>
+          <td class="text-center align-middle">
+            {% if p.escala == 'texto' or p.escala == 'fecha' %}
+              <span class="text-muted">—</span>
+            {% else %}
+              {{ p.peso }}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-warning mb-5">Este cuestionario no tiene preguntas activas.</div>
+{% endif %}
+
+<!-- Decisión del administrador -->
+<h5 class="section-title mb-3">Decisión</h5>
+<div class="row g-4">
+
+  <!-- Aprobar -->
+  <div class="col-md-6">
+    <div class="card border-success shadow-sm h-100">
+      <div class="card-header bg-success text-white fw-semibold">Aprobar cuestionario</div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="aprobar">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Visibilidad</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="publico"
+                     id="priv" value="0" checked>
+              <label class="form-check-label" for="priv">
+                <strong>Privado</strong> — solo lo usa este especialista
+              </label>
+            </div>
+            <div class="form-check mt-1">
+              <input class="form-check-input" type="radio" name="publico"
+                     id="pub" value="1">
+              <label class="form-check-label" for="pub">
+                <strong>Público</strong> — visible y copiable por todos los especialistas
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-success w-100">
+            ✓ Aprobar
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rechazar -->
+  <div class="col-md-6">
+    <div class="card border-danger shadow-sm h-100">
+      <div class="card-header bg-danger text-white fw-semibold">Rechazar cuestionario</div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="rechazar">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Motivo del rechazo</label>
+            <textarea name="motivo" class="form-control" rows="4"
+                      placeholder="Explica al especialista qué debe corregir..."
+                      required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-danger w-100">
+            ✕ Rechazar
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
