@@ -30,4 +30,10 @@ urlpatterns = [
     # Reordenar preguntas via drag & drop
     path('<int:pk>/reordenar/', views.reordenar_preguntas, name='reordenar_preguntas'),
     path('<int:pk>/reordenar/guardar/', views.guardar_orden, name='guardar_orden'),
+
+    # HU-023: Historial de estado de animo (paciente)
+    path('mi-animo/historial/', views.historial_animo, name='historial_animo'),
+
+    # HU-034: Promedio de estado de animo del paciente (especialista)
+    path('paciente/<int:paciente_pk>/promedio-animo/', views.ver_promedio_animo, name='ver_promedio_animo'),
 ]

@@ -1,3 +1,4 @@
+
 from .crear_cuestionario import listado_cuestionarios, crear_cuestionario      # HU-011
 from .agregar_pregunta import detalle_cuestionario                             # HU-012
 from .editar_pregunta import editar_pregunta                                   # HU-013
@@ -15,3 +16,6 @@ from .crear_gad7 import crear_gad7                                            # 
 from .revisar_cuestionario import revisar_cuestionario                        # admin revisa cuestionario
 from .cuestionarios_publicos import cuestionarios_publicos                    # especialista ve públicos
 from .reordenar_preguntas import reordenar_preguntas, guardar_orden           # reordenar via drag & drop
+
+from .historial_animo import historial_animo                                   # HU-023
+from .promedio_animo import ver_promedio_animo                                 # HU-034

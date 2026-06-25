@@ -6,8 +6,6 @@
   <a href="{% url 'gestion_usuarios:invitar_paciente' %}" class="btn btn-danger">+ Invitar paciente</a>
 </div>
 
-
-
 {% if invitaciones %}
 <div class="card shadow-sm">
   <div class="table-responsive">
@@ -22,8 +20,6 @@
         </tr>
       </thead>
       <tbody>
-
-
         {% for inv in invitaciones %}
         <tr>
           <td>{{ inv.nombre_paciente }}</td>
@@ -57,6 +53,10 @@
                    class="btn btn-sm btn-outline-danger">
                   Pregunta diaria
                 </a>
+                <a href="{% url 'cuestionarios:ver_promedio_animo' inv.paciente.pk %}"
+                   class="btn btn-sm btn-outline-info">
+                  Promedio ánimo
+                </a>
               </div>
             {% elif inv.estado == 'pendiente' %}
               <a href="{% url 'cuestionarios:asignar_pendiente' inv.pk %}"
@@ -75,7 +75,7 @@
 </div>
 {% else %}
 <div class="alert alert-info">
-  Aún no has invitado ningún paciente
+  Aún no has invitado ningún paciente.
   <a href="{% url 'gestion_usuarios:invitar_paciente' %}">Invita al primero</a>.
 </div>
 {% endif %}

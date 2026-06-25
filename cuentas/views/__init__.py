@@ -8,3 +8,4 @@ from .calendario_animo import calendario_animo  # HU-024
 from .eliminar_cuenta import confirmar_eliminacion, cuenta_eliminada  # HU-010
 from .pregunta_diaria_paciente import responder_pregunta_diaria, historial_pregunta_diaria  # HU-026
 from .recordatorio import configurar_recordatorio  # HU-027
+from .bienestar import respiracion_guiada  # HU-028

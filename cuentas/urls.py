@@ -34,6 +34,9 @@ urlpatterns = [
     path('eliminar-cuenta/', views.confirmar_eliminacion, name='confirmar_eliminacion'),
     path('cuenta-eliminada/', views.cuenta_eliminada, name='cuenta_eliminada'),
 
+    # HU-028: Ejercicio de respiración guiada
+    path('bienestar/respiracion/', views.respiracion_guiada, name='respiracion_guiada'),
+
     # HU-022: Registrar estado de ánimo diario
     path('animo/', views.registrar_animo, name='registrar_animo'),
 
