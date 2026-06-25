@@ -27,5 +27,86 @@
       </div>
     </div>
   </div>
+
+  <!-- HU-022 / HU-024: Estado de ánimo -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title">Estado de ánimo de hoy</h5>
+        {% if animo_hoy %}
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="display-4 fw-bold text-danger">{{ animo_hoy.valor }}</span>
+            <div>
+              <span class="text-muted">/10</span><br>
+              <span class="fw-semibold">{{ animo_hoy.get_etiqueta }}</span>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-auto flex-wrap">
+            <a href="{% url 'cuentas:registrar_animo' %}" class="btn btn-outline-danger btn-sm">
+              Actualizar
+            </a>
+            <a href="{% url 'cuentas:calendario_animo' %}" class="btn btn-outline-danger btn-sm">
+              Ver calendario
+            </a>
+          </div>
+        {% else %}
+          <p class="text-muted mb-3">Aún no has registrado cómo te sientes hoy.</p>
+          <div class="d-flex gap-2 mt-auto flex-wrap">
+            <a href="{% url 'cuentas:registrar_animo' %}" class="btn btn-danger btn-sm">
+              Registrar
+            </a>
+            <a href="{% url 'cuentas:calendario_animo' %}" class="btn btn-outline-danger btn-sm">
+              Ver calendario
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="col-md-6 mt-3">
+  <div class="card shadow-sm h-100">
+    <div class="card-body d-flex flex-column text-center">
+      <h5 class="card-title">Herramientas de Bienestar</h5>
+      <p class="text-muted mb-3">Tómate un minuto para reducir la ansiedad.</p>
+      <a href="{% url 'cuentas:respiracion_guiada' %}" class="btn btn-outline-danger mt-auto">
+        🌬️ Ejercicio de Respiración
+      </a>
+    </div>
+  </div>
+</div>
+
+{% if dato_hoy %}
+<div class="col-12 mt-4 mb-2">
+  <div class="card shadow-sm" style="border-left: 5px solid #0dcaf0;">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div>
+        <h6 class="text-info fw-bold mb-1">💡 Dato del Día</h6>
+        <p class="mb-1 fw-semibold fst-italic">"{{ dato_hoy.texto }}"</p>
+        <small class="text-muted">— Fuente: {{ dato_hoy.fuente }}</small>
+      </div>
+      <form method="post" action="{% url 'cuentas:toggle_favorito' dato_hoy.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm {% if es_favorito %}btn-warning text-white{% else %}btn-outline-warning{% endif %}" title="Marcar como favorito" style="font-size: 1.4rem; padding: 0px 10px;">
+          ★
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- HU-010: Zona de peligro -->
+<hr class="mt-5">
+<div class="mt-3">
+  <h5 class="text-danger">Zona de peligro</h5>
+  <p class="text-muted small">
+    Al eliminar tu cuenta, tus datos personales serán borrados de forma permanente e irrecuperable.
+    Tus respuestas a cuestionarios se conservarán de forma anonimizada para fines estadísticos.
+  </p>
+  <a href="{% url 'cuentas:confirmar_eliminacion' %}" class="btn btn-outline-danger btn-sm">
+    Eliminar mi cuenta
+  </a>
 </div>
 {% endblock %}
