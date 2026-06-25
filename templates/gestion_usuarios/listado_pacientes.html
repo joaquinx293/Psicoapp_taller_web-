@@ -45,6 +45,10 @@
                    class="btn btn-sm btn-outline-secondary">
                   Ver respuestas
                 </a>
+                <a href="{% url 'cuestionarios:ver_promedio_animo' inv.paciente.pk %}"
+   class="btn btn-sm btn-outline-info">
+  Ver Promedio Ánimo
+</a>
               </div>
             {% elif inv.estado == 'pendiente' %}
               <a href="{% url 'cuestionarios:asignar_pendiente' inv.pk %}"

@@ -32,4 +32,5 @@ urlpatterns = [
     path('<int:pk>/reordenar/', views.reordenar_preguntas, name='reordenar_preguntas'),
     path('<int:pk>/reordenar/guardar/', views.guardar_orden, name='guardar_orden'),
     path('mi-animo/historial/', historial_animo, name='historial_animo'),
+    path('paciente/<int:paciente_pk>/promedio-animo/', views.ver_promedio_animo, name='ver_promedio_animo'),
 ]
