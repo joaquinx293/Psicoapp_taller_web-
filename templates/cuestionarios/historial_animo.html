@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block titulo %}Historial de Ánimo — PsicoApp{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0 fw-bold" style="color: #C0392B;">Mi Historial Emocional</h2>
+            <p class="text-muted">Observa tu evolución a lo largo del tiempo.</p>
+        </div>
+        <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-outline-secondary">
+            &larr; Volver a mi perfil
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4" style="border-top: 4px solid #C0392B !important;">
+        <div class="card-body">
+            <canvas id="graficoAnimo" height="100"></canvas>
+        </div>
+    </div>
+
+    <h5 class="fw-bold mb-3" style="color: #922B21;">Detalle de registros</h5>
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead style="background-color: #f8f9fa;">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Nivel Registrado</th>
+                        <th>Etiqueta Clínica</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reg in registros_tabla %}
+                    <tr>
+                        <td>{{ reg.fecha|date:"d M Y" }}</td>
+                        <td>
+                            <span class="badge bg-danger">{{ reg.valor }} / 10</span>
+                        </td>
+                        <td class="text-muted fw-semibold">{{ reg.get_etiqueta }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-4">Aún no tienes registros de estado de ánimo.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fechas = JSON.parse('{{ fechas_json|safe }}');
+        const niveles = JSON.parse('{{ niveles_json|safe }}');
+
+        const ctx = document.getElementById('graficoAnimo').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: fechas,
+                datasets: [{
+                    label: 'Nivel de Ánimo',
+                    data: niveles,
+                    borderColor: '#C0392B',
+                    backgroundColor: 'rgba(192, 57, 43, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#C0392B',
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.3, 
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        min: 1, 
+                        max: 10, // Modificado a la escala 1-10 de Joaquín
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
