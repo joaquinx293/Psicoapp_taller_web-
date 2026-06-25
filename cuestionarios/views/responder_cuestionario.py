@@ -78,7 +78,8 @@ def responder_cuestionario(request, pk):
                         pregunta=pregunta,
                         valor=data['valor'],
                     )
-            return redirect('cuestionarios:resultado_cuestionario', respuesta_pk=respuesta.pk)
+            messages.success(request, 'Se han guardado tus respuestas.')
+            return redirect('cuestionarios:mis_cuestionarios_paciente')
 
     # Preparar preguntas con sus opciones
     preguntas_con_opciones = []
