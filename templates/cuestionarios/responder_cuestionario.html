@@ -4,17 +4,26 @@
 
 <a href="{% url 'cuestionarios:mis_cuestionarios_paciente' %}" class="text-muted small">&larr; Mis cuestionarios</a>
 <h2 class="mt-2 mb-1">{{ cuestionario.nombre }}</h2>
-<p class="text-muted mb-4">{{ cuestionario.descripcion }}</p>
+<p class="text-muted mb-3">{{ cuestionario.descripcion }}</p>
+
+{% if total_paginas > 1 %}
+<div class="d-flex align-items-center mb-4 gap-3">
+  <span class="text-muted small fw-semibold">Página {{ pagina_actual }} de {{ total_paginas }}</span>
+  <div class="progress flex-grow-1" style="height:6px;">
+    <div class="progress-bar bg-danger" role="progressbar"
+         style="width: {% widthratio pagina_actual total_paginas 100 %}%"></div>
+  </div>
+</div>
+{% endif %}
 
 <form method="post">
   {% csrf_token %}
   {% for pregunta, opciones in preguntas_con_opciones %}
   <div class="card shadow-sm mb-3">
     <div class="card-body">
-      <p class="fw-semibold mb-3">{{ forloop.counter }}. {{ pregunta.texto }}</p>
+      <p class="fw-semibold mb-3">{{ forloop.counter|add:numero_offset }}. {{ pregunta.texto }}</p>
 
       {% if pregunta.escala == 'texto' %}
-        <!-- Caja de texto libre -->
         <textarea class="form-control"
                   name="pregunta_{{ pregunta.pk }}"
                   rows="3"
@@ -22,14 +31,12 @@
                   required></textarea>
 
       {% elif pregunta.escala == 'fecha' %}
-        <!-- Selector de fecha y hora -->
         <input type="datetime-local"
                class="form-control"
                name="pregunta_{{ pregunta.pk }}"
                required>
 
       {% else %}
-        <!-- Radio buttons: likert, gad7, sino, binario, verdadero_falso -->
         <div class="d-flex flex-wrap gap-3">
           {% for valor, etiqueta in opciones %}
           <div class="form-check">
@@ -49,8 +56,19 @@
   </div>
   {% endfor %}
 
-  <button type="submit" class="btn btn-danger mt-2">Enviar respuestas</button>
-  <a href="{% url 'cuestionarios:mis_cuestionarios_paciente' %}" class="btn btn-link mt-2">Cancelar</a>
+  <div class="d-flex gap-2 mt-3 align-items-center">
+    {% if pagina_anterior %}
+      <a href="?pagina={{ pagina_anterior }}" class="btn btn-outline-secondary">
+        &larr; Anterior
+      </a>
+    {% endif %}
+    {% if es_ultima_pagina %}
+      <button type="submit" class="btn btn-danger">Enviar respuestas</button>
+    {% else %}
+      <button type="submit" class="btn btn-danger">Siguiente &rarr;</button>
+    {% endif %}
+    <a href="{% url 'cuestionarios:mis_cuestionarios_paciente' %}" class="btn btn-link ms-auto">Cancelar</a>
+  </div>
 </form>
 
 {% endblock %}

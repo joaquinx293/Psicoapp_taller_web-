@@ -5,7 +5,7 @@ from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 
-from ..models import RegistroAnimo, RespuestaPreguntaDiaria, RecordatorioEmail
+from ..models import RegistroAnimo, RespuestaPreguntaDiaria, RecordatorioEmail, DatoDelDia, DatoFavorito
 
 
 @login_required
@@ -49,9 +49,21 @@ def perfil_paciente(request):
     except Exception:
         pass
 
+    # HU-032 + HU-030: Dato del día y estado de favorito
+    dato_del_dia = None
+    dato_es_favorito = False
+    if request.user.es_paciente():
+        dato_del_dia = DatoDelDia.dato_de_hoy()
+        if dato_del_dia:
+            dato_es_favorito = DatoFavorito.objects.filter(
+                paciente=request.user, dato=dato_del_dia
+            ).exists()
+
     return render(request, 'cuentas/perfil_paciente.html', {
         'animo_hoy': animo_hoy,
         'pregunta_diaria': pregunta_diaria,
         'pregunta_ya_respondida': pregunta_ya_respondida,
         'recordatorio': recordatorio,
+        'dato_del_dia': dato_del_dia,
+        'dato_es_favorito': dato_es_favorito,
     })

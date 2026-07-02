@@ -1,9 +1,10 @@
 # HU-012: Agregar pregunta a un cuestionario
+from django.db import IntegrityError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
-from ..models import Cuestionario
+from ..models import Cuestionario, Pregunta
 from ..forms import PreguntaForm
 
 
@@ -22,14 +23,21 @@ def detalle_cuestionario(request, pk):
             pregunta = form.save(commit=False)
             pregunta.cuestionario = cuestionario
             pregunta.orden = preguntas.count() + 1
-            pregunta.save()
-            messages.success(request, 'Pregunta agregada.')
-            return redirect('cuestionarios:detalle', pk=cuestionario.pk)
+            try:
+                pregunta.save()
+                messages.success(request, 'Pregunta agregada.')
+                return redirect('cuestionarios:detalle', pk=cuestionario.pk)
+            except IntegrityError:
+                # Val-1: el UniqueConstraint (cuestionario, texto) lo detecta aquí
+                form.add_error(
+                    'texto',
+                    'Ya existe una pregunta con ese texto en este cuestionario. '
+                    'Escribe un texto diferente.'
+                )
     else:
         form = PreguntaForm()
 
     # Preguntas de otros cuestionarios del mismo especialista para importar
-    from ..models import Pregunta
     preguntas_importables = Pregunta.objects.filter(
         cuestionario__especialista=request.user,
         activa=True,

@@ -3,16 +3,20 @@ from django.conf import settings
 
 
 class Cuestionario(models.Model):
-    BORRADOR = 'borrador'
-    EN_REVISION = 'en_revision'
-    APROBADO = 'aprobado'
-    RECHAZADO = 'rechazado'
+    BORRADOR    = 'borrador'
+    EN_REVISION = 'en_revision'   # flujo de revisión admin (interno)
+    APROBADO    = 'aprobado'      # admin lo revisó y aprobó
+    RECHAZADO   = 'rechazado'     # admin lo rechazó (vuelve a borrador)
+    PUBLICADO   = 'publicado'     # visible para pacientes asignados
+    ARCHIVADO   = 'archivado'     # retirado / fuera de uso
 
     ESTADOS = [
-        (BORRADOR, 'Borrador'),
+        (BORRADOR,    'Borrador'),
         (EN_REVISION, 'En revisión'),
-        (APROBADO, 'Aprobado'),
-        (RECHAZADO, 'Rechazado'),
+        (APROBADO,    'Aprobado'),
+        (RECHAZADO,   'Rechazado'),
+        (PUBLICADO,   'Publicado'),
+        (ARCHIVADO,   'Archivado'),
     ]
 
     SUBTIPO_PERSONALIZADO = 'personalizado'
@@ -32,11 +36,19 @@ class Cuestionario(models.Model):
         related_name='cuestionarios'
     )
     nombre = models.CharField(max_length=150)
+    id_cuestionario = models.CharField(
+        max_length=30,
+        unique=True,
+        null=True, blank=True,
+        verbose_name='ID del cuestionario',
+        help_text='Identificador único que asigna el especialista (ej: ANS-001).',
+    )
     descripcion = models.TextField(blank=True)
     estado = models.CharField(max_length=20, choices=ESTADOS, default=BORRADOR)
     subtipo = models.CharField(max_length=20, choices=SUBTIPOS, default=SUBTIPO_PERSONALIZADO)
-    publico = models.BooleanField(
+    es_publico = models.BooleanField(
         default=False,
+        verbose_name='Biblioteca pública',
         help_text='Si está activo, todos los especialistas pueden verlo y copiarlo.'
     )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
@@ -49,6 +61,13 @@ class Cuestionario(models.Model):
 
     def puede_enviar_revision(self):
         return self.estado in (self.BORRADOR, self.RECHAZADO)
+
+    def puede_publicar(self):
+        """El especialista puede publicar si fue aprobado por el admin."""
+        return self.estado == self.APROBADO
+
+    def puede_archivar(self):
+        return self.estado in (self.APROBADO, self.PUBLICADO)
 
     def __str__(self):
         return f"{self.nombre} ({self.get_estado_display()})"
@@ -89,13 +108,37 @@ class Pregunta(models.Model):
     activa = models.BooleanField(default=True)
     etiqueta_opcion_1 = models.CharField(max_length=100, blank=True, default='')
     etiqueta_opcion_2 = models.CharField(max_length=100, blank=True, default='')
-    # esto es para el cuestionario  PSS-10 
+    # esto es para el cuestionario PSS-10
     invertir = models.BooleanField(
         default=False,
         help_text='Si está activo, el valor se invierte (4 - valor) antes de calcular el puntaje.'
     )
+    # Val-3: código de trazabilidad único por pregunta
+    codigo = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True, blank=True,
+        verbose_name='Código',
+        help_text='Generado automáticamente (ej: PREG-001).',
+    )
+
     class Meta:
         ordering = ['orden', 'id']
+        constraints = [
+            # Val-1: no se permiten dos preguntas con el mismo texto en el mismo cuestionario
+            models.UniqueConstraint(
+                fields=['cuestionario', 'texto'],
+                name='pregunta_unica_por_cuestionario',
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Val-3: generar código una sola vez, después del primer guardado (pk ya disponible)
+        if not self.codigo:
+            self.codigo = f'PREG-{self.pk:03d}'
+            type(self).objects.filter(pk=self.pk).update(codigo=self.codigo)
+
     def __str__(self):
         return self.texto[:50]
 class AsignacionCuestionario(models.Model):
@@ -107,7 +150,8 @@ class AsignacionCuestionario(models.Model):
     )
     paciente = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
         related_name='cuestionarios_asignados'
     )
     cuestionario = models.ForeignKey(
@@ -127,7 +171,8 @@ class RespuestaCuestionario(models.Model):
     """Una sesión de respuesta de un paciente a un cuestionario."""
     paciente = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
         related_name='respuestas'
     )
     cuestionario = models.ForeignKey(
@@ -186,7 +231,8 @@ class RespuestaCuestionario(models.Model):
             return ('Severo (15-27)', 'dark')
 
     def __str__(self):
-        return f"{self.paciente.username} — {self.cuestionario.nombre} ({self.fecha_respuesta:%d/%m/%Y})"
+        nombre = self.paciente.username if self.paciente else '(anónimo)'
+        return f"{nombre} — {self.cuestionario.nombre} ({self.fecha_respuesta:%d/%m/%Y})"
 class AsignacionPendiente(models.Model):
     """Cuestionarios pre-asignados a un paciente que aún no se ha registrado."""
     especialista = models.ForeignKey(

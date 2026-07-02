@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}Eliminar cuenta — PsicoApp{% endblock %}
+{% block titulo %}Solicitar eliminación de cuenta — PsicoApp{% endblock %}
 
 {% block contenido %}
 <div class="row justify-content-center">
@@ -7,18 +7,19 @@
 
     <div class="card border-danger shadow-sm">
       <div class="card-header bg-danger text-white">
-        <h5 class="mb-0"> Eliminar mi cuenta</h5>
+        <h5 class="mb-0">Solicitar eliminación de cuenta</h5>
       </div>
       <div class="card-body">
 
         <p class="text-muted mb-3">
-          Esta acción es permanente. Una vez confirmada:
+          Al enviar esta solicitud, un administrador revisará tu caso antes de proceder.
+          Mientras tanto, tu cuenta permanece activa.
         </p>
         <ul class="text-muted small mb-4">
-          <li>Tu nombre, correo y datos personales serán eliminados.</li>
-          <li>Tus respuestas a cuestionarios quedarán anonimizadas.</li>
-          <li>Tu sesión se cerrará y no podrás recuperar el acceso.</li>
-          <li>Tu especialista recibirá una notificación.</li>
+          <li>Tu solicitud será enviada al administrador para revisión.</li>
+          <li>Una vez aprobada, tu nombre, correo y datos personales serán eliminados.</li>
+          <li>Tus respuestas a cuestionarios quedarán anonimizadas para fines estadísticos.</li>
+          <li>Recibirás una notificación cuando la solicitud sea procesada.</li>
         </ul>
 
         {% if messages %}
@@ -36,9 +37,9 @@
           </div>
           <div class="d-grid gap-2">
             <button type="submit" class="btn btn-danger">
-              Sí, eliminar mi cuenta permanentemente
+              Enviar solicitud de eliminación de cuenta
             </button>
-            <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-outline-danger">
+            <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-outline-secondary">
               Cancelar
             </a>
           </div>

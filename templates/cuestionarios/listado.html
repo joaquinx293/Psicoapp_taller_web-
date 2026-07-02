@@ -29,6 +29,13 @@
             <span class="badge bg-success">Aprobado</span>
           {% elif c.estado == 'rechazado' %}
             <span class="badge bg-danger">Rechazado</span>
+          {% elif c.estado == 'publicado' %}
+            <span class="badge bg-primary">Publicado</span>
+          {% elif c.estado == 'archivado' %}
+            <span class="badge bg-dark">Archivado</span>
+          {% endif %}
+          {% if c.es_publico %}
+            <span class="badge bg-info text-dark ms-1">Biblioteca</span>
           {% endif %}
         </div>
         <p class="text-muted small mb-1">{{ c.descripcion|default:"Sin descripción" }}</p>
@@ -43,6 +50,18 @@
               {% if c.cantidad_preguntas_activas == 0 %}disabled title="Agrega al menos una pregunta"{% endif %}>
               Enviar a revisión
             </button>
+          </form>
+        {% endif %}
+        {% if c.estado == 'aprobado' %}
+          <form method="post" action="{% url 'cuestionarios:publicar_cuestionario' c.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-primary">Publicar</button>
+          </form>
+        {% endif %}
+        {% if c.estado == 'aprobado' or c.estado == 'publicado' %}
+          <form method="post" action="{% url 'cuestionarios:archivar_cuestionario' c.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Archivar</button>
           </form>
         {% endif %}
       </div>

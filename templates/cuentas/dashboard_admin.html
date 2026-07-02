@@ -22,9 +22,17 @@
     <h2 class="mb-0 fw-bold">Panel de Administración</h2>
     <small class="text-muted">Bienvenido, {{ user.get_full_name|default:user.username }}</small>
   </div>
-  <a href="{% url 'mantenedores:terminos' %}" class="btn btn-outline-danger">
-    Gestionar Términos y Condiciones
-  </a>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'cuentas:gestionar_datos_dia' %}" class="btn btn-outline-danger">
+      Dato del día
+    </a>
+    <a href="{% url 'cuentas:gestionar_musica' %}" class="btn btn-outline-danger">
+      Música ambiental
+    </a>
+    <a href="{% url 'mantenedores:terminos' %}" class="btn btn-outline-danger">
+      Gestionar Términos y Condiciones
+    </a>
+  </div>
 </div>
 
 <!-- Tarjetas de estadísticas -->
@@ -67,6 +75,74 @@
     </div>
   </div>
 </div>
+
+<!-- ═══ SOLICITUDES DE BAJA ═══ -->
+{% if solicitudes_baja %}
+<h5 class="section-title mb-3">
+  Solicitudes de baja
+  <span class="badge bg-danger ms-2">{{ solicitudes_baja|length }}</span>
+</h5>
+<div class="card shadow-sm mb-5">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Solicitante</th>
+          <th>Tipo</th>
+          <th>Fecha</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sol in solicitudes_baja %}
+        <tr>
+          <td class="align-middle">
+            {% if sol.solicitante %}
+              <strong>{{ sol.solicitante.get_full_name|default:sol.solicitante.username }}</strong>
+              <br><small class="text-muted">{{ sol.solicitante.email }}</small>
+            {% else %}
+              <span class="text-muted">(usuario eliminado)</span>
+            {% endif %}
+          </td>
+          <td class="align-middle">
+            {% if sol.tipo == 'solicitud_baja_paciente' %}
+              <span class="badge bg-warning text-dark">Paciente</span>
+            {% elif sol.tipo == 'solicitud_baja_especialista' %}
+              <span class="badge bg-info text-dark">Especialista</span>
+            {% endif %}
+          </td>
+          <td class="align-middle text-muted small">{{ sol.fecha|date:"d/m/Y H:i" }}</td>
+          <td class="align-middle">
+            {% if sol.tipo == 'solicitud_baja_paciente' %}
+              <div class="d-flex gap-1 flex-wrap">
+                <form method="post" action="{% url 'cuentas:aprobar_baja_paciente' sol.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-aprobar btn-sm"
+                    onclick="return confirm('¿Aprobar la eliminación de la cuenta de {{ sol.solicitante.get_full_name|default:sol.solicitante.username }}?')">
+                    Aprobar
+                  </button>
+                </form>
+                <form method="post" action="{% url 'cuentas:rechazar_baja_paciente' sol.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    Rechazar
+                  </button>
+                </form>
+              </div>
+            {% elif sol.tipo == 'solicitud_baja_especialista' %}
+              <a href="{% url 'cuentas:ver_impacto_baja_especialista' sol.pk %}"
+                 class="btn btn-outline-danger btn-sm">
+                Ver impacto y decidir
+              </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
 
 <!-- ═══ CUESTIONARIOS EN REVISIÓN ═══ -->
 <h5 class="section-title mb-3">

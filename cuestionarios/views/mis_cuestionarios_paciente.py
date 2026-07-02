@@ -10,17 +10,24 @@ def mis_cuestionarios_paciente(request):
     if not request.user.es_paciente():
         return redirect('cuentas:login')
 
-    asignaciones = AsignacionCuestionario.objects.filter(
-        paciente=request.user,
-        activa=True
-    ).select_related('cuestionario')
+    asignaciones = list(
+        AsignacionCuestionario.objects.filter(
+            paciente=request.user,
+            activa=True
+        ).select_related('cuestionario').order_by('cuestionario__nombre')
+    )
 
-    # Cuestionarios ya respondidos por este paciente
-    respondidos_ids = RespuestaCuestionario.objects.filter(
-        paciente=request.user
-    ).values_list('cuestionario_id', flat=True)
+    # Set para lookup O(1) en template
+    respondidos_ids = set(
+        RespuestaCuestionario.objects.filter(
+            paciente=request.user
+        ).values_list('cuestionario_id', flat=True)
+    )
+
+    # Pendientes primero, luego ya respondidos
+    asignaciones.sort(key=lambda a: a.cuestionario.pk in respondidos_ids)
 
     return render(request, 'cuestionarios/mis_cuestionarios_paciente.html', {
         'asignaciones': asignaciones,
-        'respondidos_ids': list(respondidos_ids),
+        'respondidos_ids': respondidos_ids,
     })

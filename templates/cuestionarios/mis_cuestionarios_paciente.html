@@ -10,18 +10,40 @@
   <div class="col-md-6">
     <div class="card shadow-sm h-100">
       <div class="card-body">
-        <h5 class="card-title">{{ asig.cuestionario.nombre }}</h5>
+
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="card-title mb-0">{{ asig.cuestionario.nombre }}</h5>
+          <div class="d-flex gap-1 flex-shrink-0 ms-2">
+            {# Badge 1: estado de respuesta #}
+            {% if asig.cuestionario.pk in respondidos_ids %}
+              <span class="badge bg-success">Respondido</span>
+            {% else %}
+              <span class="badge bg-danger">Pendiente</span>
+            {% endif %}
+            {# Badge 2: tipo de cuestionario #}
+            {% if asig.cuestionario.subtipo == 'gad7' %}
+              <span class="badge bg-warning text-dark">GAD-7</span>
+            {% elif asig.cuestionario.subtipo == 'pss10' %}
+              <span class="badge bg-info text-dark">PSS-10</span>
+            {% elif asig.cuestionario.subtipo == 'phq9' %}
+              <span class="badge bg-secondary">PHQ-9</span>
+            {% else %}
+              <span class="badge bg-light text-dark border">Personalizado</span>
+            {% endif %}
+          </div>
+        </div>
+
         <p class="text-muted small mb-2">{{ asig.cuestionario.descripcion|default:"" }}</p>
-        <p class="small mb-3">{{ asig.cuestionario.cantidad_preguntas_activas }} pregunta(s)</p>
+        <p class="small mb-3">{{ asig.cuestionario.cantidad_preguntas_activas }} pregunta{{ asig.cuestionario.cantidad_preguntas_activas|pluralize }}</p>
 
         {% if asig.cuestionario.pk in respondidos_ids %}
-          <span class="badge bg-success me-2">Ya respondido</span>
           <a href="{% url 'cuestionarios:responder_cuestionario' asig.cuestionario.pk %}"
              class="btn btn-sm btn-outline-secondary">Responder de nuevo</a>
         {% else %}
           <a href="{% url 'cuestionarios:responder_cuestionario' asig.cuestionario.pk %}"
              class="btn btn-sm btn-danger">Responder</a>
         {% endif %}
+
       </div>
     </div>
   </div>

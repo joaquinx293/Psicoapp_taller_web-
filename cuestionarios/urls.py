@@ -36,4 +36,8 @@ urlpatterns = [
 
     # HU-034: Promedio de estado de animo del paciente (especialista)
     path('paciente/<int:paciente_pk>/promedio-animo/', views.ver_promedio_animo, name='ver_promedio_animo'),
+
+    # Cambio 2: publicar y archivar cuestionario (especialista)
+    path('<int:pk>/publicar/', views.publicar_cuestionario, name='publicar_cuestionario'),
+    path('<int:pk>/archivar/', views.archivar_cuestionario, name='archivar_cuestionario'),
 ]

@@ -17,11 +17,11 @@ def revisar_cuestionario(request, pk):
         accion = request.POST.get('accion')
 
         if accion == 'aprobar':
-            publico = request.POST.get('publico') == '1'
+            es_publico = request.POST.get('es_publico') == '1'
             cuestionario.estado = Cuestionario.APROBADO
-            cuestionario.publico = publico
+            cuestionario.es_publico = es_publico
             cuestionario.save()
-            visibilidad = 'público para todos los especialistas' if publico else 'privado (solo del especialista)'
+            visibilidad = 'público para todos los especialistas' if es_publico else 'privado (solo del especialista)'
             messages.success(
                 request,
                 f'"{cuestionario.nombre}" fue aprobado y quedó {visibilidad}.'
@@ -34,7 +34,7 @@ def revisar_cuestionario(request, pk):
                 messages.error(request, 'Debes ingresar un motivo de rechazo.')
             else:
                 cuestionario.estado = Cuestionario.RECHAZADO
-                cuestionario.publico = False
+                cuestionario.es_publico = False
                 cuestionario.save()
                 messages.warning(
                     request,

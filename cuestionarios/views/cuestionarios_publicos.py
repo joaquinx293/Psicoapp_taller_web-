@@ -15,7 +15,7 @@ def cuestionarios_publicos(request, pk=None):
     # Copiar un cuestionario público al listado propio
     if request.method == 'POST' and pk:
         original = get_object_or_404(
-            Cuestionario, pk=pk, publico=True, estado=Cuestionario.APROBADO
+            Cuestionario, pk=pk, es_publico=True, estado=Cuestionario.APROBADO
         )
 
         nombre_copia = f'{original.nombre} (copia)'
@@ -34,7 +34,7 @@ def cuestionarios_publicos(request, pk=None):
             descripcion=original.descripcion,
             estado=Cuestionario.BORRADOR,
             subtipo=original.subtipo,
-            publico=False,
+            es_publico=False,
         )
         for pregunta in original.preguntas.filter(activa=True).order_by('orden', 'id'):
             Pregunta.objects.create(
@@ -59,7 +59,7 @@ def cuestionarios_publicos(request, pk=None):
     asegurar_cuestionarios_sistema()
 
     publicos = Cuestionario.objects.filter(
-        publico=True, estado=Cuestionario.APROBADO
+        es_publico=True, estado=Cuestionario.APROBADO
     ).order_by('especialista', 'nombre')
 
     return render(request, 'cuestionarios/cuestionarios_publicos.html', {

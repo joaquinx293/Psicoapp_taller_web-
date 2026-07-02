@@ -91,7 +91,8 @@ class RegistroAnimo(models.Model):
 
     paciente = models.ForeignKey(
         'Usuario',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
         related_name='registros_animo',
         limit_choices_to={'rol': 'paciente'},
     )
@@ -108,14 +109,16 @@ class RegistroAnimo(models.Model):
         return self.ETIQUETAS.get(self.valor, '')
 
     def __str__(self):
-        return f"{self.paciente.username} – {self.fecha}: {self.valor}/10"
+        nombre = self.paciente.username if self.paciente else '(anónimo)'
+        return f"{nombre} – {self.fecha}: {self.valor}/10"
 
 
 class PreguntaDiaria(models.Model):
     """HU-025: Pregunta diaria de seguimiento configurada por el especialista para un paciente."""
     paciente = models.OneToOneField(
         'Usuario',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
         related_name='pregunta_diaria',
         limit_choices_to={'rol': 'paciente'},
     )
@@ -138,7 +141,8 @@ class PreguntaDiaria(models.Model):
 
     def __str__(self):
         estado = 'activa' if self.activa else 'inactiva'
-        return f"[{estado}] {self.paciente.username}: {self.texto[:50]}"
+        nombre = self.paciente.username if self.paciente else '(anónimo)'
+        return f"[{estado}] {nombre}: {self.texto[:50]}"
 
 
 class RespuestaPreguntaDiaria(models.Model):
@@ -150,7 +154,8 @@ class RespuestaPreguntaDiaria(models.Model):
     )
     paciente = models.ForeignKey(
         'Usuario',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
         related_name='respuestas_pregunta_diaria',
     )
     fecha = models.DateField()
@@ -164,14 +169,16 @@ class RespuestaPreguntaDiaria(models.Model):
         verbose_name_plural = 'Respuestas pregunta diaria'
 
     def __str__(self):
-        return f"{self.paciente.username} – {self.fecha}"
+        nombre = self.paciente.username if self.paciente else '(anónimo)'
+        return f"{nombre} – {self.fecha}"
 
 
 class RecordatorioEmail(models.Model):
     """HU-027: Recordatorio diario por correo para registrar estado de ánimo."""
     paciente = models.OneToOneField(
         'Usuario',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
         related_name='recordatorio_email',
         limit_choices_to={'rol': 'paciente'},
     )
@@ -190,16 +197,150 @@ class RecordatorioEmail(models.Model):
 
     def __str__(self):
         estado = 'activo' if self.activo else 'inactivo'
-        return f"[{estado}] {self.paciente.username} a las {self.hora}"
+        nombre = self.paciente.username if self.paciente else '(anónimo)'
+        return f"[{estado}] {nombre} a las {self.hora}"
+
+
+class PistaMusical(models.Model):
+    """HU-029: Pistas de música ambiental gestionadas por el administrador."""
+    titulo  = models.CharField(max_length=100, verbose_name='Título')
+    archivo = models.FileField(upload_to='musica/', verbose_name='Archivo de audio')
+    orden   = models.PositiveIntegerField(default=0, verbose_name='Orden')
+    activa  = models.BooleanField(default=True, verbose_name='Activa')
+
+    class Meta:
+        ordering = ['orden', 'id']
+        verbose_name = 'Pista musical'
+        verbose_name_plural = 'Pistas musicales'
+
+    def __str__(self):
+        estado = '✓' if self.activa else '✗'
+        return f"[{estado}] {self.titulo}"
+
+
+class DatoDelDia(models.Model):
+    """HU-032: Dato educativo diario gestionado por el administrador."""
+    texto            = models.TextField(verbose_name='Texto')
+    fuente           = models.CharField(max_length=200, verbose_name='Fuente')
+    activo           = models.BooleanField(default=True, verbose_name='Activo')
+    fecha_creacion   = models.DateTimeField(auto_now_add=True)
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+        verbose_name = 'Dato del día'
+        verbose_name_plural = 'Datos del día'
+
+    @staticmethod
+    def contar_palabras(texto):
+        return len(texto.split())
+
+    @classmethod
+    def dato_de_hoy(cls):
+        """Retorna el dato activo correspondiente a hoy (rotativo, sin repetición por día)."""
+        from django.utils import timezone
+        activos = list(cls.objects.filter(activo=True).order_by('id'))
+        if not activos:
+            return None
+        dia = timezone.localdate().timetuple().tm_yday  # 1–366
+        return activos[(dia - 1) % len(activos)]
+
+    def __str__(self):
+        estado = '✓' if self.activo else '✗'
+        return f"[{estado}] {self.texto[:60]}... ({self.fuente})"
+
+
+class DatoFavorito(models.Model):
+    """HU-030: Dato del día marcado como favorito por el paciente."""
+    paciente = models.ForeignKey(
+        'Usuario',
+        on_delete=models.CASCADE,
+        related_name='datos_favoritos',
+        limit_choices_to={'rol': 'paciente'},
+    )
+    dato = models.ForeignKey(
+        'DatoDelDia',
+        on_delete=models.CASCADE,
+        related_name='guardado_por',
+    )
+    fecha_guardado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('paciente', 'dato')
+        ordering = ['-fecha_guardado']
+        verbose_name = 'Dato favorito'
+        verbose_name_plural = 'Datos favoritos'
+
+    def __str__(self):
+        return f"{self.paciente.username} ❤ {self.dato.texto[:40]}"
+
+
+class LogCambioMusica(models.Model):
+    """HU-033: Auditoría de cambios en las pistas de música ambiental."""
+
+    ACCION_SUBIR       = 'subir'
+    ACCION_ELIMINAR    = 'eliminar'
+    ACCION_ACTIVAR     = 'activar'
+    ACCION_DESACTIVAR  = 'desactivar'
+    ACCION_REORDENAR   = 'reordenar'
+
+    ACCIONES = [
+        (ACCION_SUBIR,      'Pista subida'),
+        (ACCION_ELIMINAR,   'Pista eliminada'),
+        (ACCION_ACTIVAR,    'Pista activada'),
+        (ACCION_DESACTIVAR, 'Pista desactivada'),
+        (ACCION_REORDENAR,  'Orden modificado'),
+    ]
+
+    admin        = models.ForeignKey(
+        'Usuario',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='logs_musica',
+        verbose_name='Administrador',
+    )
+    accion       = models.CharField(max_length=20, choices=ACCIONES)
+    pista_titulo = models.CharField(max_length=100, verbose_name='Pista')
+    detalle      = models.CharField(max_length=200, blank=True, verbose_name='Detalle')
+    fecha        = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha']
+        verbose_name = 'Log de música'
+        verbose_name_plural = 'Logs de música'
+
+    def __str__(self):
+        admin = self.admin.username if self.admin else '(eliminado)'
+        return f"{self.fecha:%d/%m/%Y %H:%M} — {admin}: {self.get_accion_display()} → {self.pista_titulo}"
 
 
 class Notificacion(models.Model):
-    """HU-010: Notificaciones in-app para especialistas."""
+    """HU-010: Notificaciones in-app. Incluye solicitudes de baja de pacientes y especialistas."""
+
+    # Tipos
+    TIPO_GENERAL = 'general'
+    TIPO_BAJA_PACIENTE = 'solicitud_baja_paciente'
+    TIPO_BAJA_ESPECIALISTA = 'solicitud_baja_especialista'
+
+    TIPOS = [
+        (TIPO_GENERAL, 'General'),
+        (TIPO_BAJA_PACIENTE, 'Solicitud de baja (paciente)'),
+        (TIPO_BAJA_ESPECIALISTA, 'Solicitud de baja (especialista)'),
+    ]
+
     destinatario = models.ForeignKey(
         'Usuario',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
         related_name='notificaciones',
     )
+    solicitante = models.ForeignKey(
+        'Usuario',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='notificaciones_enviadas',
+    )
+    tipo = models.CharField(max_length=30, choices=TIPOS, default=TIPO_GENERAL)
     mensaje = models.TextField()
     leida = models.BooleanField(default=False)
     fecha = models.DateTimeField(auto_now_add=True)
@@ -210,4 +351,5 @@ class Notificacion(models.Model):
         verbose_name_plural = 'Notificaciones'
 
     def __str__(self):
-        return f"→ {self.destinatario.username}: {self.mensaje[:50]}"
+        dest = self.destinatario.username if self.destinatario else '(eliminado)'
+        return f"→ {dest}: {self.mensaje[:50]}"

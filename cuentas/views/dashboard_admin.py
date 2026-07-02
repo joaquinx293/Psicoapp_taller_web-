@@ -1,17 +1,26 @@
 # HU-006: Dashboard del administrador
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.db.models import Count
+import uuid
 
-from ..models import Usuario
+from django.contrib import messages
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+
+from ..models import Notificacion, Usuario
 from cuestionarios.models import Cuestionario
+
+
+def _solo_admin(request):
+    return request.user.is_authenticated and (
+        request.user.es_admin() or request.user.is_superuser
+    )
 
 
 @login_required
 def dashboard_admin(request):
-    if not request.user.es_admin() and not request.user.is_superuser:
+    if not _solo_admin(request):
         return redirect("cuentas:login")
+
     total_pacientes     = Usuario.objects.filter(rol="paciente").count()
     total_especialistas = Usuario.objects.filter(rol="especialista", estado="activo").count()
     pendientes          = Usuario.objects.filter(rol="especialista", estado="pendiente")
@@ -19,6 +28,16 @@ def dashboard_admin(request):
     especialistas       = Usuario.objects.filter(rol="especialista").order_by("estado", "first_name")
     pacientes           = Usuario.objects.filter(rol="paciente").order_by("estado", "first_name")
     en_revision         = Cuestionario.objects.filter(estado=Cuestionario.EN_REVISION).select_related("especialista")
+
+    # Solicitudes de baja pendientes
+    solicitudes_baja = Notificacion.objects.filter(
+        tipo__in=[
+            Notificacion.TIPO_BAJA_PACIENTE,
+            Notificacion.TIPO_BAJA_ESPECIALISTA,
+        ],
+        leida=False,
+    ).select_related('solicitante')
+
     return render(request, "cuentas/dashboard_admin.html", {
         "total_pacientes":     total_pacientes,
         "total_especialistas": total_especialistas,
@@ -28,12 +47,13 @@ def dashboard_admin(request):
         "especialistas":       especialistas,
         "pacientes":           pacientes,
         "en_revision":         en_revision,
+        "solicitudes_baja":    solicitudes_baja,
     })
 
 
 @login_required
 def aprobar_especialista(request, pk):
-    if not request.user.es_admin() and not request.user.is_superuser:
+    if not _solo_admin(request):
         return redirect("cuentas:login")
     especialista = get_object_or_404(Usuario, pk=pk, rol="especialista")
     especialista.estado = "activo"
@@ -45,7 +65,7 @@ def aprobar_especialista(request, pk):
 
 @login_required
 def rechazar_especialista(request, pk):
-    if not request.user.es_admin() and not request.user.is_superuser:
+    if not _solo_admin(request):
         return redirect("cuentas:login")
     especialista = get_object_or_404(Usuario, pk=pk, rol="especialista")
     if request.method == "POST":
@@ -61,3 +81,203 @@ def rechazar_especialista(request, pk):
         return redirect("cuentas:dashboard_admin")
     return render(request, "cuentas/rechazar_especialista.html",
                   {"especialista": especialista})
+
+
+# ── Baja de paciente ──────────────────────────────────────────────────────────
+
+@login_required
+def aprobar_baja_paciente(request, notificacion_pk):
+    """Admin aprueba solicitud: anonimiza al paciente y marca notificación como leída."""
+    if not _solo_admin(request):
+        return redirect("cuentas:login")
+    if request.method != "POST":
+        return redirect("cuentas:dashboard_admin")
+
+    notif = get_object_or_404(
+        Notificacion,
+        pk=notificacion_pk,
+        tipo=Notificacion.TIPO_BAJA_PACIENTE,
+        leida=False,
+    )
+    paciente = notif.solicitante
+
+    if paciente:
+        nombre_display = paciente.get_full_name() or paciente.username
+        uid = uuid.uuid4().hex[:10]
+        paciente.username      = f'anonimo_{uid}'
+        paciente.first_name    = ''
+        paciente.last_name     = ''
+        paciente.email         = ''
+        paciente.fecha_nacimiento = None
+        paciente.motivo_rechazo   = None
+        paciente.estado        = Usuario.INACTIVO
+        paciente.is_active     = False
+        paciente.set_unusable_password()
+        paciente.save()
+        messages.success(
+            request,
+            f'La cuenta de {nombre_display} fue anonimizada. '
+            f'Sus datos clínicos se conservan sin identificación.'
+        )
+    else:
+        messages.warning(request, 'El paciente ya no existe en el sistema.')
+
+    notif.leida = True
+    notif.save()
+    return redirect("cuentas:dashboard_admin")
+
+
+@login_required
+def rechazar_baja_paciente(request, notificacion_pk):
+    """Admin rechaza la solicitud de baja del paciente."""
+    if not _solo_admin(request):
+        return redirect("cuentas:login")
+    if request.method != "POST":
+        return redirect("cuentas:dashboard_admin")
+
+    notif = get_object_or_404(
+        Notificacion,
+        pk=notificacion_pk,
+        tipo=Notificacion.TIPO_BAJA_PACIENTE,
+        leida=False,
+    )
+
+    # Notificar al paciente si aún existe
+    paciente = notif.solicitante
+    if paciente:
+        Notificacion.objects.create(
+            destinatario=paciente,
+            tipo=Notificacion.TIPO_GENERAL,
+            mensaje=(
+                'Tu solicitud de eliminación de cuenta fue revisada por el administrador '
+                'y no fue aprobada en este momento. Tu cuenta permanece activa.'
+            ),
+        )
+        messages.info(
+            request,
+            f'Solicitud de {paciente.get_full_name() or paciente.username} rechazada. '
+            f'Se le notificó que su cuenta permanece activa.'
+        )
+    else:
+        messages.info(request, 'Solicitud rechazada (el paciente ya no existe).')
+
+    notif.leida = True
+    notif.save()
+    return redirect("cuentas:dashboard_admin")
+
+
+# ── Baja de especialista ──────────────────────────────────────────────────────
+
+@login_required
+def ver_impacto_baja_especialista(request, notificacion_pk):
+    """Muestra al admin el impacto de aprobar la baja del especialista."""
+    if not _solo_admin(request):
+        return redirect("cuentas:login")
+
+    notif = get_object_or_404(
+        Notificacion,
+        pk=notificacion_pk,
+        tipo=Notificacion.TIPO_BAJA_ESPECIALISTA,
+        leida=False,
+    )
+    especialista = notif.solicitante
+
+    from cuestionarios.models import AsignacionCuestionario, Cuestionario as CModel
+    impacto = {}
+    if especialista:
+        asignaciones_activas = AsignacionCuestionario.objects.filter(
+            especialista=especialista, activa=True
+        ).select_related('paciente', 'cuestionario')
+        cuestionarios_propios = CModel.objects.filter(especialista=especialista)
+        impacto = {
+            'asignaciones_activas': asignaciones_activas,
+            'total_asignaciones':   asignaciones_activas.count(),
+            'cuestionarios_propios': cuestionarios_propios,
+            'total_cuestionarios':  cuestionarios_propios.count(),
+        }
+
+    return render(request, 'cuentas/confirmar_baja_especialista.html', {
+        'notif':        notif,
+        'especialista': especialista,
+        'impacto':      impacto,
+    })
+
+
+@login_required
+def aprobar_baja_especialista(request, notificacion_pk):
+    """Admin aprueba: desactiva al especialista lógicamente."""
+    if not _solo_admin(request):
+        return redirect("cuentas:login")
+    if request.method != "POST":
+        return redirect("cuentas:dashboard_admin")
+
+    notif = get_object_or_404(
+        Notificacion,
+        pk=notificacion_pk,
+        tipo=Notificacion.TIPO_BAJA_ESPECIALISTA,
+        leida=False,
+    )
+    especialista = notif.solicitante
+
+    if especialista:
+        nombre_display = especialista.get_full_name() or especialista.username
+        especialista.estado    = Usuario.INACTIVO
+        especialista.is_active = False
+        especialista.save()
+
+        # Notificar al especialista
+        Notificacion.objects.create(
+            destinatario=especialista,
+            tipo=Notificacion.TIPO_GENERAL,
+            mensaje=(
+                'Tu solicitud de baja fue aprobada. Tu cuenta ha sido desactivada. '
+                'Tus registros clínicos se conservan en el sistema.'
+            ),
+        )
+        messages.success(
+            request,
+            f'La cuenta del/la especialista {nombre_display} fue desactivada.'
+        )
+    else:
+        messages.warning(request, 'El especialista ya no existe en el sistema.')
+
+    notif.leida = True
+    notif.save()
+    return redirect("cuentas:dashboard_admin")
+
+
+@login_required
+def rechazar_baja_especialista(request, notificacion_pk):
+    """Admin rechaza la solicitud de baja del especialista."""
+    if not _solo_admin(request):
+        return redirect("cuentas:login")
+    if request.method != "POST":
+        return redirect("cuentas:dashboard_admin")
+
+    notif = get_object_or_404(
+        Notificacion,
+        pk=notificacion_pk,
+        tipo=Notificacion.TIPO_BAJA_ESPECIALISTA,
+        leida=False,
+    )
+    especialista = notif.solicitante
+
+    if especialista:
+        Notificacion.objects.create(
+            destinatario=especialista,
+            tipo=Notificacion.TIPO_GENERAL,
+            mensaje=(
+                'Tu solicitud de baja fue revisada por el administrador '
+                'y no fue aprobada. Tu cuenta permanece activa.'
+            ),
+        )
+        messages.info(
+            request,
+            f'Solicitud de {especialista.get_full_name() or especialista.username} rechazada.'
+        )
+    else:
+        messages.info(request, 'Solicitud rechazada (el especialista ya no existe).')
+
+    notif.leida = True
+    notif.save()
+    return redirect("cuentas:dashboard_admin")

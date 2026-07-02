@@ -19,3 +19,5 @@ from .reordenar_preguntas import reordenar_preguntas, guardar_orden           # 
 
 from .historial_animo import historial_animo                                   # HU-023
 from .promedio_animo import ver_promedio_animo                                 # HU-034
+
+from .publicar_cuestionario import publicar_cuestionario, archivar_cuestionario  # Cambio 2

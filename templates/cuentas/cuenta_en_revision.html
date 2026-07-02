@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block titulo %}Solicitud enviada — PsicoApp{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-6 col-lg-5 text-center">
+
+    <div class="card shadow-sm border-0">
+      <div class="card-body py-5">
+        <div class="mb-3" style="font-size: 3rem;">📋</div>
+        <h4 class="fw-bold text-danger mb-3">Solicitud enviada</h4>
+        <p class="text-muted mb-4">
+          Tu solicitud de eliminación de cuenta fue enviada al administrador.
+          Tu cuenta permanece activa mientras se revisa la solicitud.
+        </p>
+        <p class="text-muted small mb-4">
+          Recibirás una notificación en la plataforma cuando sea procesada.
+        </p>
+        <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-outline-danger">
+          Volver a mi perfil
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

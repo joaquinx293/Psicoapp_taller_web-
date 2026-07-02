@@ -26,6 +26,27 @@ def enviar_a_revision(request, pk):
         )
         return redirect('cuestionarios:detalle', pk=pk)
 
+    # Val-2: verificar que no exista otro cuestionario publicado del mismo especialista
+    # con exactamente las mismas preguntas (mismo conjunto de textos y misma cantidad)
+    textos_actuales = set(
+        cuestionario.preguntas.filter(activa=True).values_list('texto', flat=True)
+    )
+    otros = Cuestionario.objects.filter(
+        especialista=request.user,
+        estado__in=[Cuestionario.APROBADO, Cuestionario.EN_REVISION],
+    ).exclude(pk=cuestionario.pk)
+
+    for otro in otros:
+        textos_otro = set(otro.preguntas.filter(activa=True).values_list('texto', flat=True))
+        if textos_otro == textos_actuales and len(textos_otro) == len(textos_actuales):
+            messages.error(
+                request,
+                f'Ya existe un cuestionario publicado con estas preguntas: '
+                f'"{otro.nombre}" (ID: {otro.id_cuestionario or "sin ID"}). '
+                f'Modifica las preguntas antes de enviar a revisión.'
+            )
+            return redirect('cuestionarios:detalle', pk=pk)
+
     if request.method == 'POST':
         cuestionario.estado = Cuestionario.EN_REVISION
         cuestionario.save()

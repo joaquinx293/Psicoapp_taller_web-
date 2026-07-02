@@ -14,12 +14,12 @@ def asignar_cuestionario(request, paciente_pk):
 
     paciente = get_object_or_404(Usuario, pk=paciente_pk, rol=Usuario.ROL_PACIENTE)
 
-    # Solo cuestionarios aprobados o propios del especialista
+    # Solo cuestionarios aprobados/publicados o propios del especialista
     cuestionarios_disponibles = Cuestionario.objects.filter(
-        estado=Cuestionario.APROBADO
+        estado__in=[Cuestionario.APROBADO, Cuestionario.PUBLICADO]
     ) | Cuestionario.objects.filter(
         especialista=request.user,
-        estado__in=[Cuestionario.BORRADOR, Cuestionario.APROBADO, Cuestionario.RECHAZADO]
+        estado__in=[Cuestionario.BORRADOR, Cuestionario.APROBADO, Cuestionario.PUBLICADO, Cuestionario.RECHAZADO]
     )
     cuestionarios_disponibles = cuestionarios_disponibles.distinct()
 

@@ -72,7 +72,7 @@ def _asegurar_gad7():
         ),
         estado=Cuestionario.APROBADO,
         subtipo=Cuestionario.SUBTIPO_GAD7,
-        publico=True,
+        es_publico=True,
     )
     for i, texto in enumerate(_GAD7_PREGUNTAS, start=1):
         Pregunta.objects.create(
@@ -102,7 +102,7 @@ def _asegurar_pss10():
         ),
         estado=Cuestionario.APROBADO,
         subtipo=Cuestionario.SUBTIPO_PSS10,
-        publico=True,
+        es_publico=True,
     )
     for i, (texto, invertir) in enumerate(_PSS10_PREGUNTAS, start=1):
         Pregunta.objects.create(
@@ -133,7 +133,7 @@ def _asegurar_phq9():
         ),
         estado=Cuestionario.APROBADO,
         subtipo=Cuestionario.SUBTIPO_PHQ9,
-        publico=True,
+        es_publico=True,
     )
     for i, texto in enumerate(_PHQ9_PREGUNTAS, start=1):
         Pregunta.objects.create(
