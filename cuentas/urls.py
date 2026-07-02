@@ -48,9 +48,10 @@ urlpatterns = [
     path('favoritos/datos/<int:pk>/toggle/', views.toggle_favorito_dato, name='toggle_favorito_dato'),
 
     # HU-032: Dato del día (admin)
-    path('datos-del-dia/',               views.gestionar_datos_dia, name='gestionar_datos_dia'),
-    path('datos-del-dia/<int:pk>/editar/', views.editar_dato_dia,   name='editar_dato_dia'),
-    path('datos-del-dia/<int:pk>/toggle/', views.toggle_dato_dia,   name='toggle_dato_dia'),
+    path('datos-del-dia/',               views.gestionar_datos_dia,    name='gestionar_datos_dia'),
+    path('datos-del-dia/<int:pk>/editar/', views.editar_dato_dia,      name='editar_dato_dia'),
+    path('datos-del-dia/<int:pk>/toggle/', views.toggle_dato_dia,      name='toggle_dato_dia'),
+    path('datos-del-dia/cargar-txt/',    views.cargar_datos_desde_txt, name='cargar_datos_desde_txt'),
 
     # HU-029: Música ambiental
     path('musica/pistas.json/', views.pistas_json, name='pistas_json'),

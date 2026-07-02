@@ -25,6 +25,7 @@ from .dato_del_dia import (                         # HU-032
     gestionar_datos_dia,
     editar_dato_dia,
     toggle_dato_dia,
+    cargar_datos_desde_txt,
 )
 from .musica import (                               # HU-029
     pistas_json,

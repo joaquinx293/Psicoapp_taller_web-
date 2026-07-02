@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('dato', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
                     related_name='guardado_por',
-                    to='cuentas.datodelddia',
+                    to='cuentas.datodeldia',
                 )),
                 ('paciente', models.ForeignKey(
                     on_delete=django.db.models.deletion.CASCADE,
@@ -33,11 +33,8 @@ class Migration(migrations.Migration):
                 'ordering': ['-fecha_guardado'],
             },
         ),
-        migrations.AddConstraint(
-            model_name='datofavorito',
-            constraint=models.UniqueConstraint(
-                fields=['paciente', 'dato'],
-                name='favorito_unico_por_paciente',
-            ),
+        migrations.AlterUniqueTogether(
+            name='datofavorito',
+            unique_together={('paciente', 'dato')},
         ),
     ]

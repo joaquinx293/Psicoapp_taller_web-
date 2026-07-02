@@ -38,14 +38,44 @@
       </div>
       {% if faltan > 0 %}
       <div>
-        <span class="badge bg-danger fs-6">Faltan {{ faltan }} para cubrir 60 días</span>
+        <span class="badge bg-danger fs-6">Faltan {{ faltan }} para cubrir {{ minimo }} días</span>
       </div>
       {% else %}
       <div>
-        <span class="badge bg-success fs-6">✓ Cobertura de 60 días garantizada</span>
+        <span class="badge bg-success fs-6">✓ Cobertura de {{ minimo }} días garantizada</span>
       </div>
       {% endif %}
     </div>
+  </div>
+</div>
+
+<!-- ── Carga masiva desde TXT ────────────────────────────────────────────── -->
+<div class="card shadow-sm mb-4 border-start border-primary border-3">
+  <div class="card-header fw-semibold">Carga masiva desde archivo .txt</div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">
+      Sube un archivo <strong>.txt</strong> con los datos separados por <code>&gt;</code>.
+      Cada fragmento se tratará como un dato independiente. Los duplicados y los que
+      superen {{ max_palabras }} palabras serán omitidos automáticamente.
+    </p>
+    <form method="post" action="{% url 'cuentas:cargar_datos_desde_txt' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+          <label for="archivo_txt" class="form-label">Archivo <span class="text-danger">*</span></label>
+          <input type="file" id="archivo_txt" name="archivo_txt"
+                 class="form-control" accept=".txt" required>
+        </div>
+        <div class="col-md-5">
+          <label for="fuente_txt" class="form-label">Fuente <span class="text-danger">*</span></label>
+          <input type="text" id="fuente_txt" name="fuente_txt" maxlength="200"
+                 class="form-control" placeholder="Ej: OMS, 2023 / APA Guidelines" required>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100">Cargar</button>
+        </div>
+      </div>
+    </form>
   </div>
 </div>
 
