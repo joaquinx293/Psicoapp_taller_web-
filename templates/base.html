@@ -8,6 +8,43 @@
   <style>
     .navbar-psicoapp { background-color: #C0392B; }
     body { background-color: #f8f9fa; }
+
+    /* ── Reproductor de música ── */
+    #psico-player {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 8px 16px;
+      z-index: 1050;
+      display: none;             /* oculto hasta que JS lo active */
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.4);
+    }
+    #psico-player.visible { display: flex; }
+    body.has-player { padding-bottom: 64px; }
+
+    #player-title {
+      flex: 1;
+      font-size: .85rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .player-btn {
+      background: none;
+      border: none;
+      color: #e0e0e0;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px 6px;
+      line-height: 1;
+      transition: color .15s;
+    }
+    .player-btn:hover { color: #C0392B; }
+    #player-volume { width: 80px; accent-color: #C0392B; }
   </style>
 </head>
 <body>
@@ -18,14 +55,14 @@
       <div class="navbar-nav ms-auto">
         {% if user.is_authenticated %}
           <a class="nav-link text-white" href="{% url 'cuentas:logout' %}">
-            Cerrar sesion
+            Cerrar sesión
           </a>
         {% else %}
           <a class="nav-link text-white" href="{% url 'gestion_usuarios:ingresar_pin' %}">
             Fui invitado
           </a>
           <a class="nav-link text-white" href="{% url 'cuentas:login' %}">
-            Iniciar sesion
+            Iniciar sesión
           </a>
         {% endif %}
       </div>
@@ -46,6 +83,146 @@
   <main class="container my-4">
     {% block contenido %}{% endblock %}
   </main>
+
+  <!-- ══ Reproductor persistente (solo pacientes autenticados) ══ -->
+  {% if user.is_authenticated and user.es_paciente %}
+  <div id="psico-player" role="region" aria-label="Reproductor de música ambiental">
+    <button class="player-btn" id="btn-prev"   title="Anterior">&#9664;&#9664;</button>
+    <button class="player-btn" id="btn-play"   title="Reproducir / Pausar">&#9654;</button>
+    <button class="player-btn" id="btn-next"   title="Siguiente">&#9654;&#9654;</button>
+    <span   id="player-title">Cargando...</span>
+    <span style="font-size:.75rem; color:#888; flex-shrink:0;">🔊</span>
+    <input  type="range" id="player-volume" min="0" max="1" step="0.05" value="0.7"
+            title="Volumen">
+  </div>
+
+  <audio id="psico-audio" preload="auto"></audio>
+
+  <script>
+  (function () {
+    const PISTAS_URL = '{% url "cuentas:pistas_json" %}';
+    const SK = 'psicoplayer_v1';
+
+    const player  = document.getElementById('psico-player');
+    const audio   = document.getElementById('psico-audio');
+    const btnPlay = document.getElementById('btn-play');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const title   = document.getElementById('player-title');
+    const volCtrl = document.getElementById('player-volume');
+
+    let pistas = [];
+    let idx    = 0;
+    let saveTimer = null;
+
+    // ── Persistencia ──────────────────────────────────────────────
+    function loadState() {
+      try { return JSON.parse(sessionStorage.getItem(SK)) || {}; } catch { return {}; }
+    }
+    function saveState() {
+      const s = {
+        idx:     idx,
+        time:    audio.currentTime,
+        volume:  audio.volume,
+        playing: !audio.paused,
+      };
+      sessionStorage.setItem(SK, JSON.stringify(s));
+    }
+
+    // ── UI ────────────────────────────────────────────────────────
+    function updateUI() {
+      btnPlay.innerHTML = audio.paused ? '&#9654;' : '&#9646;&#9646;';
+      title.textContent = pistas.length ? pistas[idx].titulo : '';
+    }
+
+    function loadTrack(trackIdx, seekTo, autoplay) {
+      idx = ((trackIdx % pistas.length) + pistas.length) % pistas.length;
+      audio.src = pistas[idx].url;
+      audio.load();
+      audio.volume = volCtrl.value;
+      audio.addEventListener('canplay', function handler() {
+        audio.removeEventListener('canplay', handler);
+        if (seekTo > 0) {
+          try { audio.currentTime = seekTo; } catch {}
+        }
+        if (autoplay) {
+          audio.play().catch(() => {});
+        }
+        updateUI();
+      });
+    }
+
+    // ── Controles ─────────────────────────────────────────────────
+    btnPlay.addEventListener('click', function () {
+      if (!pistas.length) return;
+      if (audio.paused) {
+        if (!audio.src) loadTrack(idx, 0, true);
+        else audio.play().catch(() => {});
+      } else {
+        audio.pause();
+      }
+      updateUI();
+      saveState();
+    });
+
+    btnPrev.addEventListener('click', function () {
+      if (!pistas.length) return;
+      loadTrack(idx - 1, 0, !audio.paused);
+      saveState();
+    });
+
+    btnNext.addEventListener('click', function () {
+      if (!pistas.length) return;
+      loadTrack(idx + 1, 0, !audio.paused);
+      saveState();
+    });
+
+    audio.addEventListener('ended', function () {
+      loadTrack(idx + 1, 0, true);   // auto-avanza
+    });
+
+    audio.addEventListener('play',  updateUI);
+    audio.addEventListener('pause', updateUI);
+
+    volCtrl.addEventListener('input', function () {
+      audio.volume = parseFloat(this.value);
+      saveState();
+    });
+
+    // ── Guardar estado cada segundo ───────────────────────────────
+    setInterval(saveState, 1000);
+
+    // ── Guardar antes de navegar ──────────────────────────────────
+    window.addEventListener('pagehide', saveState);
+
+    // ── Inicializar ───────────────────────────────────────────────
+    fetch(PISTAS_URL)
+      .then(r => r.json())
+      .then(data => {
+        pistas = data.pistas || [];
+        if (!pistas.length) return;         // no tracks → player stays hidden
+
+        // Mostrar el reproductor
+        player.classList.add('visible');
+        document.body.classList.add('has-player');
+
+        // Restaurar estado de sesión
+        const saved = loadState();
+        const savedIdx  = (saved.idx !== undefined && saved.idx < pistas.length) ? saved.idx : 0;
+        const savedTime = saved.time  || 0;
+        const savedVol  = saved.volume !== undefined ? saved.volume : 0.7;
+        const wasPlaying = !!saved.playing;
+
+        volCtrl.value = savedVol;
+        audio.volume  = savedVol;
+
+        loadTrack(savedIdx, savedTime, wasPlaying);
+      })
+      .catch(() => {});  // silencia errores de red
+  })();
+  </script>
+  {% endif %}
+  <!-- ══ fin reproductor ══ -->
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
