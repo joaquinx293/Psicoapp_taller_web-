@@ -138,3 +138,8 @@ DEFAULT_FROM_EMAIL  = 'PsicoApp <apsicoutal@gmail.com>'
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Media files (archivos subidos por el admin, ej. pistas de música)
+import os
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
