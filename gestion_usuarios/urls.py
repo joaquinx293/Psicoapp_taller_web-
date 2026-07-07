@@ -1,9 +1,13 @@
+from django.shortcuts import redirect
 from django.urls import path
 from . import views
 
 app_name = 'gestion_usuarios'
 
 urlpatterns = [
+    # /gestion/ sin subpath → redirige al dashboard del especialista
+    path('', lambda request: redirect('gestion_usuarios:dashboard')),
+
     path('dashboard/', views.dashboard, name='dashboard'),
     path('invitar/', views.invitar_paciente, name='invitar_paciente'),
     path('pacientes/', views.listado_pacientes, name='listado_pacientes'),

@@ -14,7 +14,7 @@ def eliminar_pregunta(request, pk):
     cuestionario = pregunta.cuestionario
 
     # Solo se puede eliminar si el cuestionario es editable
-    if cuestionario.estado not in (cuestionario.BORRADOR, cuestionario.RECHAZADO):
+    if cuestionario.estado != cuestionario.BORRADOR:
         messages.error(
             request,
             'No puedes eliminar preguntas de un cuestionario que ya fue enviado a revision.'

@@ -26,5 +26,5 @@ urlpatterns = [
     path('gestion/', include('gestion_usuarios.urls')),
     path('cuestionarios/', include('cuestionarios.urls')),
     path('mantenedores/', include('mantenedores.urls')),
-    path('', lambda request: redirect('cuentas:login'), name='inicio'),
+    path('', lambda request: redirect('cuentas:redireccion' if request.user.is_authenticated else 'cuentas:login'), name='inicio'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

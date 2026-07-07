@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 from cuentas.models import PistaMusical, LogCambioMusica
 
 FORMATOS_VALIDOS = {'.mp3', '.ogg', '.wav', '.flac', '.aac', '.m4a'}
-TAMANIO_MAX_MB   = 10
+TAMANIO_MAX_MB   = 100
 TAMANIO_MAX_BYTES = TAMANIO_MAX_MB * 1024 * 1024
 
 

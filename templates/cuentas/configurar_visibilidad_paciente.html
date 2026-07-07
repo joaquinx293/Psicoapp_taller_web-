@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block titulo %}Permisos — {{ paciente.get_full_name|default:paciente.username }}{% endblock %}
+
+{% block contenido %}
+
+<a href="{% url destino %}" class="text-muted small">&larr; Volver</a>
+<h2 class="mt-2 mb-1">Permisos del paciente</h2>
+<p class="text-muted mb-4">
+  Paciente: <strong>{{ paciente.get_full_name|default:paciente.username }}</strong>
+  ({{ paciente.email }})
+</p>
+
+<!-- ── Permisos ───────────────────────────────────────────────── -->
+<div class="card shadow-sm mb-4" style="max-width:560px;">
+  <div class="card-header fw-semibold">Secciones y acciones disponibles para el paciente</div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">
+      Desmarca una opción para ocultarla o bloquearla. El paciente verá un mensaje
+      indicando que debe consultar con su especialista.
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="permisos">
+
+      <!-- Visibilidad -->
+      <h6 class="text-uppercase text-muted small fw-bold mb-2">Visibilidad</h6>
+
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox"
+               name="ver_historial_animo_habilitado" id="chk_historial"
+               {% if prefs.ver_historial_animo_habilitado %}checked{% endif %}>
+        <label class="form-check-label" for="chk_historial">
+          <strong>Historial de ánimo</strong>
+          <span class="text-muted small d-block">Gráfico con el historial de registros emocionales.</span>
+        </label>
+      </div>
+
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox"
+               name="ver_calendario_habilitado" id="chk_calendario"
+               {% if prefs.ver_calendario_habilitado %}checked{% endif %}>
+        <label class="form-check-label" for="chk_calendario">
+          <strong>Calendario emocional</strong>
+          <span class="text-muted small d-block">Vista mensual con registros de ánimo por día.</span>
+        </label>
+      </div>
+
+      <div class="form-check mb-4">
+        <input class="form-check-input" type="checkbox"
+               name="ver_promedio_animo_habilitado" id="chk_promedio"
+               {% if prefs.ver_promedio_animo_habilitado %}checked{% endif %}>
+        <label class="form-check-label" for="chk_promedio">
+          <strong>Promedio de ánimo</strong>
+          <span class="text-muted small d-block">Estadísticas y promedios del estado emocional.</span>
+        </label>
+      </div>
+
+      <!-- Cuenta -->
+      <h6 class="text-uppercase text-muted small fw-bold mb-2">Cuenta</h6>
+
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox"
+               name="editar_datos_habilitado" id="chk_datos"
+               {% if prefs.editar_datos_habilitado %}checked{% endif %}>
+        <label class="form-check-label" for="chk_datos">
+          <strong>Editar datos personales</strong>
+          <span class="text-muted small d-block">Permite al paciente cambiar su nombre y correo.</span>
+        </label>
+      </div>
+
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox"
+               name="cambiar_contrasena_habilitado" id="chk_contrasena"
+               {% if prefs.cambiar_contrasena_habilitado %}checked{% endif %}>
+        <label class="form-check-label" for="chk_contrasena">
+          <strong>Cambiar contraseña</strong>
+          <span class="text-muted small d-block">Permite al paciente actualizar su contraseña.</span>
+        </label>
+      </div>
+
+      <div class="form-check mb-4">
+        <input class="form-check-input" type="checkbox"
+               name="configurar_recordatorio_habilitado" id="chk_recordatorio"
+               {% if prefs.configurar_recordatorio_habilitado %}checked{% endif %}>
+        <label class="form-check-label" for="chk_recordatorio">
+          <strong>Configurar recordatorio por correo</strong>
+          <span class="text-muted small d-block">
+            Permite al paciente activar o cambiar la hora del recordatorio.
+            Si está desmarcado, solo tú puedes configurarlo.
+          </span>
+        </label>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-danger">Guardar permisos</button>
+        <a href="{% url destino %}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Recordatorio por correo ────────────────────────────────── -->
+<div class="card shadow-sm" style="max-width:560px;">
+  <div class="card-header fw-semibold d-flex align-items-center gap-2">
+     Recordatorio por correo del paciente
+    {% if recordatorio and recordatorio.activo %}
+      <span class="badge bg-success ms-auto">Activo — {{ recordatorio.hora|time:"H:i" }}</span>
+    {% elif recordatorio and not recordatorio.activo %}
+      <span class="badge bg-secondary ms-auto">Inactivo</span>
+    {% else %}
+      <span class="badge bg-light text-muted ms-auto">Sin configurar</span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">
+      Configura o desactiva el recordatorio diario por correo de este paciente.
+      {% if not prefs.configurar_recordatorio_habilitado %}
+        <span class="text-danger fw-semibold">El paciente no puede modificarlo (permiso bloqueado).</span>
+      {% endif %}
+    </p>
+
+    <form method="post" class="d-flex gap-2 align-items-end flex-wrap mb-3">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="recordatorio">
+      <input type="hidden" name="sub_accion" value="guardar">
+
+      <div>
+        <label for="hora_rec" class="form-label small mb-1">Hora del recordatorio</label>
+        <input type="time" name="hora" id="hora_rec"
+               class="form-control form-control-sm"
+               value="{{ recordatorio.hora|time:'H:i'|default:'' }}"
+               required>
+      </div>
+
+      <button type="submit" class="btn btn-sm btn-danger">
+        {% if recordatorio %}Actualizar hora{% else %}Activar recordatorio{% endif %}
+      </button>
+    </form>
+
+    {% if recordatorio and recordatorio.activo %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="recordatorio">
+      <input type="hidden" name="sub_accion" value="desactivar">
+      <button type="submit" class="btn btn-sm btn-outline-secondary"
+              onclick="return confirm('¿Desactivar el recordatorio de este paciente?')">
+        Desactivar recordatorio
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

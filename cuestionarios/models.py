@@ -3,20 +3,16 @@ from django.conf import settings
 
 
 class Cuestionario(models.Model):
-    BORRADOR    = 'borrador'
-    EN_REVISION = 'en_revision'   # flujo de revisión admin (interno)
-    APROBADO    = 'aprobado'      # admin lo revisó y aprobó
-    RECHAZADO   = 'rechazado'     # admin lo rechazó (vuelve a borrador)
-    PUBLICADO   = 'publicado'     # visible para pacientes asignados
-    ARCHIVADO   = 'archivado'     # retirado / fuera de uso
+    BORRADOR  = 'borrador'   # en edición / pendiente de aprobación por admin
+    APROBADO  = 'aprobado'   # admin lo aprobó
+    PUBLICADO = 'publicado'  # visible para pacientes asignados
+    ARCHIVADO = 'archivado'  # retirado / fuera de uso
 
     ESTADOS = [
-        (BORRADOR,    'Borrador'),
-        (EN_REVISION, 'En revisión'),
-        (APROBADO,    'Aprobado'),
-        (RECHAZADO,   'Rechazado'),
-        (PUBLICADO,   'Publicado'),
-        (ARCHIVADO,   'Archivado'),
+        (BORRADOR,  'Borrador'),
+        (APROBADO,  'Aprobado'),
+        (PUBLICADO, 'Publicado'),
+        (ARCHIVADO, 'Archivado'),
     ]
 
     SUBTIPO_PERSONALIZADO = 'personalizado'
@@ -51,6 +47,16 @@ class Cuestionario(models.Model):
         verbose_name='Biblioteca pública',
         help_text='Si está activo, todos los especialistas pueden verlo y copiarlo.'
     )
+    permite_reintentos = models.BooleanField(
+        default=True,
+        verbose_name='Permite reintentos',
+    )
+    intentos_maximos = models.IntegerField(
+        null=True, blank=True,
+        verbose_name='Intentos máximos',
+        help_text='Número máximo de veces que un paciente puede responder este cuestionario. '
+                  'Dejar vacío para ilimitado.',
+    )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -60,7 +66,8 @@ class Cuestionario(models.Model):
         return self.preguntas.filter(activa=True).count()
 
     def puede_enviar_revision(self):
-        return self.estado in (self.BORRADOR, self.RECHAZADO)
+        """El especialista puede solicitar revisión cuando está en borrador."""
+        return self.estado == self.BORRADOR
 
     def puede_publicar(self):
         """El especialista puede publicar si fue aprobado por el admin."""
@@ -161,6 +168,11 @@ class AsignacionCuestionario(models.Model):
     )
     fecha_asignacion = models.DateTimeField(auto_now_add=True)
     activa = models.BooleanField(default=True)
+    intentos_maximos = models.IntegerField(
+        default=1,
+        verbose_name='Intentos máximos',
+        help_text='Número de veces que el paciente puede responder este cuestionario. 0 = ilimitado.',
+    )
 
     class Meta:
         unique_together = [('paciente', 'cuestionario')]

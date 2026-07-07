@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Sección no disponible — PsicoApp{% endblock %}
+{% block contenido %}
+
+<div class="text-center py-5">
+  <div class="mb-4" style="font-size:3rem;">🔒</div>
+  <h3 class="mb-2">Sección no disponible</h3>
+  <p class="text-muted mb-4">
+    El acceso a <strong>{{ seccion }}</strong> no está habilitado en este momento.<br>
+    Consulta con tu especialista si deseas activar esta sección.
+  </p>
+  <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-danger">
+    Volver a mi perfil
+  </a>
+</div>
+
+{% endblock %}

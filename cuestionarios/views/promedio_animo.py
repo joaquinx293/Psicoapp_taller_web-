@@ -10,7 +10,21 @@ Usuario = get_user_model()
 
 @login_required
 def ver_promedio_animo(request, paciente_pk):
-    """HU-034: Ver promedio de estado de ánimo de un paciente (Archivo dedicado)"""
+    """
+    HU-034: Muestra el promedio de estado de ánimo de un paciente al especialista.
+
+    Cálculo:
+    - Campo promediado: ``RegistroAnimo.valor`` (escala numérica 1-10).
+    - Período: últimos 30 días calendario desde hoy (inclusive del día 30 atrás).
+    - Redondeo: a 1 decimal con ``round(promedio, 1)``.
+    - Sin registros en el período: ``promedio`` es ``None``; la plantilla
+      muestra un mensaje neutro sin intentar dividir por cero (Django Avg
+      devuelve None automáticamente en querysets vacíos).
+    - Semáforo de color:
+        * ≥ 7.0 → verde  (``success``)  — ánimo positivo
+        * ≥ 4.0 → amarillo (``warning``) — ánimo moderado
+        * < 4.0 → rojo   (``danger``)  — ánimo bajo, requiere atención
+    """
     if not request.user.es_especialista():
         return redirect('cuentas:login')
 

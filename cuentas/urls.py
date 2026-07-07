@@ -1,3 +1,4 @@
+from django.shortcuts import redirect
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
@@ -5,6 +6,9 @@ from . import views
 app_name = 'cuentas'
 
 urlpatterns = [
+    # /cuentas/ sin subpath → redirige según rol
+    path('', lambda request: redirect('cuentas:redireccion' if request.user.is_authenticated else 'cuentas:login')),
+
     path('registro/', views.registro_especialista, name='registro'),
     path('login/', auth_views.LoginView.as_view(
         template_name='cuentas/login.html'
@@ -12,6 +16,12 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('redireccion/', views.redireccion_por_rol, name='redireccion'),
     path('perfil/', views.perfil_paciente, name='perfil_paciente'),
+
+    # Control de acceso por especialista
+    path('pacientes/<int:paciente_id>/visibilidad/', views.configurar_visibilidad_paciente, name='configurar_visibilidad_paciente'),
+
+    # Editar usuario (admin)
+    path('admin-dashboard/usuarios/<int:pk>/editar/', views.editar_usuario_admin, name='editar_usuario_admin'),
 
     # HU-006: dashboard admin
     path('admin-dashboard/', views.dashboard_admin, name='dashboard_admin'),

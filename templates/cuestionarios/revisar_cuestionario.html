@@ -17,7 +17,7 @@
       &mdash; {{ cuestionario.fecha_creacion|date:"d/m/Y" }}
     </span>
   </div>
-  <span class="badge bg-warning text-dark fs-6">En revisión</span>
+  <span class="badge bg-secondary fs-6">Borrador</span>
 </div>
 
 {% if cuestionario.descripcion %}
@@ -29,6 +29,7 @@
 {% if preguntas %}
 <div class="card shadow-sm mb-5">
   <div class="card-body p-0">
+    <div class="table-responsive">
     <table class="table table-sm mb-0">
       <thead>
         <tr>
@@ -64,6 +65,7 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 {% else %}
@@ -72,66 +74,35 @@
 
 <!-- Decisión del administrador -->
 <h5 class="section-title mb-3">Decisión</h5>
-<div class="row g-4">
+<div class="card border-success shadow-sm" style="max-width:500px;">
+  <div class="card-header bg-success text-white fw-semibold">Aprobar cuestionario</div>
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="aprobar">
 
-  <!-- Aprobar -->
-  <div class="col-md-6">
-    <div class="card border-success shadow-sm h-100">
-      <div class="card-header bg-success text-white fw-semibold">Aprobar cuestionario</div>
-      <div class="card-body">
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="accion" value="aprobar">
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Visibilidad</label>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="es_publico"
-                     id="priv" value="0" checked>
-              <label class="form-check-label" for="priv">
-                <strong>Privado</strong> — solo lo usa este especialista
-              </label>
-            </div>
-            <div class="form-check mt-1">
-              <input class="form-check-input" type="radio" name="es_publico"
-                     id="pub" value="1">
-              <label class="form-check-label" for="pub">
-                <strong>Público</strong> — visible y copiable por todos los especialistas
-              </label>
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-success w-100">
-            ✓ Aprobar
-          </button>
-        </form>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Visibilidad</label>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="es_publico"
+                 id="priv" value="0" checked>
+          <label class="form-check-label" for="priv">
+            <strong>Privado</strong> — solo lo usa este especialista
+          </label>
+        </div>
+        <div class="form-check mt-1">
+          <input class="form-check-input" type="radio" name="es_publico"
+                 id="pub" value="1">
+          <label class="form-check-label" for="pub">
+            <strong>Público</strong> — visible y copiable por todos los especialistas
+          </label>
+        </div>
       </div>
-    </div>
+
+      <button type="submit" class="btn btn-success w-100">
+        ✓ Aprobar
+      </button>
+    </form>
   </div>
-
-  <!-- Rechazar -->
-  <div class="col-md-6">
-    <div class="card border-danger shadow-sm h-100">
-      <div class="card-header bg-danger text-white fw-semibold">Rechazar cuestionario</div>
-      <div class="card-body">
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="accion" value="rechazar">
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Motivo del rechazo</label>
-            <textarea name="motivo" class="form-control" rows="4"
-                      placeholder="Explica al especialista qué debe corregir..."
-                      required></textarea>
-          </div>
-
-          <button type="submit" class="btn btn-danger w-100">
-            ✕ Rechazar
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-
 </div>
 {% endblock %}

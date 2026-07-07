@@ -14,7 +14,7 @@ def importar_pregunta(request, pk):
         Cuestionario, pk=pk, especialista=request.user
     )
 
-    if cuestionario.estado not in (Cuestionario.BORRADOR, Cuestionario.RECHAZADO):
+    if cuestionario.estado != Cuestionario.BORRADOR:
         messages.error(request, 'No puedes modificar este cuestionario en su estado actual.')
         return redirect('cuestionarios:detalle', pk=pk)
 

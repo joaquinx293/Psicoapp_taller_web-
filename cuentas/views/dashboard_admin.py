@@ -4,6 +4,8 @@ import uuid
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from ..models import Notificacion, Usuario
@@ -25,9 +27,30 @@ def dashboard_admin(request):
     total_especialistas = Usuario.objects.filter(rol="especialista", estado="activo").count()
     pendientes          = Usuario.objects.filter(rol="especialista", estado="pendiente")
     total_cuestionarios = Cuestionario.objects.count()
-    especialistas       = Usuario.objects.filter(rol="especialista").order_by("estado", "first_name")
-    pacientes           = Usuario.objects.filter(rol="paciente").order_by("estado", "first_name")
-    en_revision         = Cuestionario.objects.filter(estado=Cuestionario.EN_REVISION).select_related("especialista")
+    en_revision         = Cuestionario.objects.filter(estado=Cuestionario.BORRADOR).select_related("especialista")
+
+    # ── Búsqueda, filtros y paginación de usuarios ──────────────────────────────
+    q      = request.GET.get('q', '').strip()
+    f_rol  = request.GET.get('rol', '')
+    f_est  = request.GET.get('estado', '')
+
+    usuarios_qs = Usuario.objects.exclude(is_superuser=True).order_by('rol', 'estado', 'first_name', 'username')
+
+    if q:
+        usuarios_qs = usuarios_qs.filter(
+            Q(first_name__icontains=q) |
+            Q(last_name__icontains=q)  |
+            Q(username__icontains=q)   |
+            Q(email__icontains=q)
+        )
+    if f_rol:
+        usuarios_qs = usuarios_qs.filter(rol=f_rol)
+    if f_est:
+        usuarios_qs = usuarios_qs.filter(estado=f_est)
+
+    paginator   = Paginator(usuarios_qs, 20)
+    page_number = request.GET.get('page')
+    page_obj    = paginator.get_page(page_number)
 
     # Solicitudes de baja pendientes
     solicitudes_baja = Notificacion.objects.filter(
@@ -44,10 +67,15 @@ def dashboard_admin(request):
         "total_pendientes":    pendientes.count(),
         "total_cuestionarios": total_cuestionarios,
         "pendientes":          pendientes,
-        "especialistas":       especialistas,
-        "pacientes":           pacientes,
         "en_revision":         en_revision,
         "solicitudes_baja":    solicitudes_baja,
+        # Tabla unificada de usuarios
+        "page_obj":  page_obj,
+        "q":         q,
+        "f_rol":     f_rol,
+        "f_est":     f_est,
+        "roles":     Usuario.ROLES,
+        "estados":   Usuario.ESTADOS,
     })
 
 

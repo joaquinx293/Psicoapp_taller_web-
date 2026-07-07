@@ -20,6 +20,8 @@ from .pregunta_diaria_paciente import responder_pregunta_diaria, historial_pregu
 from .recordatorio import configurar_recordatorio  # HU-027
 from .bienestar import respiracion_guiada  # HU-028
 from .editar_perfil import editar_perfil_paciente  # Cambio 4
+from .visibilidad_paciente import configurar_visibilidad_paciente  # control de acceso
+from .editar_usuario_admin import editar_usuario_admin  # gestión usuarios admin
 from .favoritos_dato import toggle_favorito_dato, mis_favoritos_datos  # HU-030
 from .dato_del_dia import (                         # HU-032
     gestionar_datos_dia,

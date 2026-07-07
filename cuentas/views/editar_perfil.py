@@ -4,7 +4,14 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 
-from cuentas.models import Usuario
+from cuentas.models import Usuario, RecordatorioEmail, PreferenciasVisibilidad
+
+
+def _get_prefs(usuario):
+    try:
+        return usuario.preferencias_visibilidad
+    except PreferenciasVisibilidad.DoesNotExist:
+        return None
 
 
 @login_required
@@ -13,13 +20,18 @@ def editar_perfil_paciente(request):
         return redirect('cuentas:redireccion')
 
     usuario = request.user
+    prefs   = _get_prefs(usuario)
     errores = {}
 
     if request.method == 'POST':
         accion = request.POST.get('accion')
 
         if accion == 'datos':
-            # Actualizar nombre, apellido y email
+            # Verificar permiso
+            if prefs and not prefs.editar_datos_habilitado:
+                messages.error(request, 'Tu especialista ha desactivado la edición de datos personales.')
+                return redirect('cuentas:editar_perfil_paciente')
+
             first_name = request.POST.get('first_name', '').strip()
             last_name  = request.POST.get('last_name', '').strip()
             email      = request.POST.get('email', '').strip().lower()
@@ -38,6 +50,11 @@ def editar_perfil_paciente(request):
                 return redirect('cuentas:editar_perfil_paciente')
 
         elif accion == 'contrasena':
+            # Verificar permiso
+            if prefs and not prefs.cambiar_contrasena_habilitado:
+                messages.error(request, 'Tu especialista ha desactivado el cambio de contraseña.')
+                return redirect('cuentas:editar_perfil_paciente')
+
             contrasena_actual = request.POST.get('contrasena_actual', '')
             nueva             = request.POST.get('nueva_contrasena', '')
             confirmacion      = request.POST.get('confirmar_contrasena', '')
@@ -52,11 +69,19 @@ def editar_perfil_paciente(request):
             if not errores:
                 usuario.set_password(nueva)
                 usuario.save()
-                update_session_auth_hash(request, usuario)  # mantiene la sesión activa
+                update_session_auth_hash(request, usuario)
                 messages.success(request, 'Tu contraseña fue actualizada correctamente.')
                 return redirect('cuentas:editar_perfil_paciente')
 
+    recordatorio = None
+    try:
+        recordatorio = usuario.recordatorio_email
+    except Exception:
+        pass
+
     return render(request, 'cuentas/editar_perfil.html', {
-        'usuario': usuario,
-        'errores': errores,
+        'usuario':      usuario,
+        'prefs':        prefs,
+        'errores':      errores,
+        'recordatorio': recordatorio,
     })

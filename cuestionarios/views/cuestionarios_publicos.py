@@ -1,7 +1,8 @@
 # Especialista: explorar cuestionarios públicos y copiarlos
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.shortcuts import render, redirect, get_object_or_404
 
 from ..models import Cuestionario, Pregunta
 from .seed_sistema import asegurar_cuestionarios_sistema
@@ -58,10 +59,13 @@ def cuestionarios_publicos(request, pk=None):
     # Asegurar que las plantillas del sistema existan
     asegurar_cuestionarios_sistema()
 
-    publicos = Cuestionario.objects.filter(
+    publicos_qs = Cuestionario.objects.filter(
         es_publico=True, estado=Cuestionario.APROBADO
     ).order_by('especialista', 'nombre')
 
+    paginator = Paginator(publicos_qs, 12)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+
     return render(request, 'cuestionarios/cuestionarios_publicos.html', {
-        'publicos': publicos,
+        'page_obj': page_obj,
     })

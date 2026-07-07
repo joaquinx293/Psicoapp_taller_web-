@@ -3,13 +3,17 @@
 {% block titulo %}Iniciar sesión - PsicoApp{% endblock %}
 
 {% block contenido %}
-<div class="row justify-content-center mt-5">
-  <div class="col-md-5">
+<div class="row justify-content-center mt-2 mt-md-5">
+  <div class="col-12 col-sm-10 col-md-5">
     <div class="card shadow-sm">
       <div class="card-body p-4">
 
-        <h2 class="text-center mb-4" style="color: #f91d05;">PsicoApp</h2>
-        <h5 class="text-center text-muted mb-4">Iniciar sesión</h5>
+        <div class="text-center mb-4">
+          <div class="mx-auto mb-3 d-flex align-items-center justify-content-center"
+               style="width:48px;height:48px;background:var(--red);border-radius:14px;font-size:1.3rem;font-weight:800;color:#fff;">P</div>
+          <h5 class="fw-bold mb-0" style="letter-spacing:-.3px;">Bienvenido a PsicoApp</h5>
+          <p class="text-muted small mt-1">Ingresa tus datos para continuar</p>
+        </div>
 
         {% if form.errors %}
           <div class="alert alert-danger">
@@ -40,7 +44,7 @@
             ¿Eres especialista? Solicita registro
           </a>
           <a href="{% url 'gestion_usuarios:ingresar_pin' %}" class="btn btn-outline-danger btn-sm">
-            Fui invitado — activar mi cuenta
+            Fui invitado activar mi cuenta
           </a>
           <a href="{% url 'cuentas:password_reset' %}" class="text-muted small mt-1">
             Olvidé mi contraseña

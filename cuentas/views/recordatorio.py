@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
-from ..models import RecordatorioEmail
+from ..models import RecordatorioEmail, PreferenciasVisibilidad
 
 
 @login_required
@@ -13,6 +13,15 @@ def configurar_recordatorio(request):
     """Activa, desactiva o actualiza la hora del recordatorio del paciente."""
     if not request.user.es_paciente():
         return redirect('cuentas:redireccion')
+
+    # Verificar permiso: si el especialista lo bloqueó, rechazar
+    try:
+        prefs = request.user.preferencias_visibilidad
+        if not prefs.configurar_recordatorio_habilitado:
+            messages.error(request, 'Tu especialista ha desactivado la configuración del recordatorio.')
+            return redirect('cuentas:editar_perfil_paciente')
+    except PreferenciasVisibilidad.DoesNotExist:
+        pass  # Sin prefs = permitido
 
     accion = request.POST.get('accion', '')
     hora = request.POST.get('hora', '').strip()

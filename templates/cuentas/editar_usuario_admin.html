@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block titulo %}Editar usuario — {{ usuario.username }}{% endblock %}
+
+{% block contenido %}
+<style>
+  .section-title { border-bottom: 2px solid #C0392B; padding-bottom: 6px; color: #922B21; }
+</style>
+
+<a href="{% url 'cuentas:dashboard_admin' %}" class="text-muted small">&larr; Volver al panel</a>
+<h2 class="mt-2 mb-1">Editar usuario</h2>
+<p class="text-muted mb-4">
+  <strong>{{ usuario.username }}</strong>
+  <span class="badge bg-secondary ms-1">{{ usuario.get_rol_display }}</span>
+</p>
+
+<div class="card shadow-sm" style="max-width:580px;">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label for="first_name" class="form-label">Nombre</label>
+          <input type="text" id="first_name" name="first_name"
+                 class="form-control" value="{{ usuario.first_name }}">
+        </div>
+        <div class="col-md-6">
+          <label for="last_name" class="form-label">Apellido</label>
+          <input type="text" id="last_name" name="last_name"
+                 class="form-control" value="{{ usuario.last_name }}">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+        <input type="email" id="email" name="email"
+               class="form-control {% if errores.email %}is-invalid{% endif %}"
+               value="{{ usuario.email }}" required>
+        {% if errores.email %}
+          <div class="invalid-feedback">{{ errores.email }}</div>
+        {% endif %}
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label for="rol" class="form-label">Rol <span class="text-danger">*</span></label>
+          <select id="rol" name="rol"
+                  class="form-select {% if errores.rol %}is-invalid{% endif %}">
+            {% for val, label in roles %}
+              <option value="{{ val }}" {% if usuario.rol == val %}selected{% endif %}>
+                {{ label }}
+              </option>
+            {% endfor %}
+          </select>
+          {% if errores.rol %}
+            <div class="invalid-feedback">{{ errores.rol }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          <label for="estado" class="form-label">Estado <span class="text-danger">*</span></label>
+          <select id="estado" name="estado"
+                  class="form-select {% if errores.estado %}is-invalid{% endif %}">
+            {% for val, label in estados %}
+              <option value="{{ val }}" {% if usuario.estado == val %}selected{% endif %}>
+                {{ label }}
+              </option>
+            {% endfor %}
+          </select>
+          {% if errores.estado %}
+            <div class="invalid-feedback">{{ errores.estado }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <p class="text-muted small mb-3">
+        <strong>Username:</strong> {{ usuario.username }}
+        (no editable desde aquí)
+      </p>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-danger">Guardar cambios</button>
+        <a href="{% url 'cuentas:dashboard_admin' %}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
