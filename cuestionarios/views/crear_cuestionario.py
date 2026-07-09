@@ -3,6 +3,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 
 from ..models import Cuestionario
 from ..forms import CuestionarioForm
@@ -28,12 +29,21 @@ def crear_cuestionario(request):
     if request.method == 'POST':
         form = CuestionarioForm(request.POST)
         if form.is_valid():
-            cuestionario = form.save(commit=False)
-            cuestionario.especialista = request.user
-            cuestionario.estado = Cuestionario.BORRADOR
-            cuestionario.save()
-            messages.success(request, 'Cuestionario creado. Ahora agrega preguntas.')
-            return redirect('cuestionarios:detalle', pk=cuestionario.pk)
+            nombre = form.cleaned_data.get('nombre', '').strip()
+            if Cuestionario.objects.filter(
+                especialista=request.user, nombre__iexact=nombre
+            ).exists():
+                form.add_error('nombre', 'Ya tienes un cuestionario con ese nombre.')
+            else:
+                try:
+                    cuestionario = form.save(commit=False)
+                    cuestionario.especialista = request.user
+                    cuestionario.estado = Cuestionario.BORRADOR
+                    cuestionario.save()
+                    messages.success(request, 'Cuestionario creado. Ahora agrega preguntas.')
+                    return redirect('cuestionarios:detalle', pk=cuestionario.pk)
+                except IntegrityError:
+                    form.add_error('nombre', 'Ya tienes un cuestionario con ese nombre.')
     else:
         form = CuestionarioForm()
 

@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block titulo %}Uso de herramientas de bienestar — PsicoApp{% endblock %}
+
+{% block contenido %}
+<div class="container-fluid py-4 px-4">
+
+  {# ── Encabezado ──────────────────────────────────────────────────────────── #}
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-heart-pulse me-2 text-primary"></i>Uso de herramientas de bienestar
+      </h2>
+      <small class="text-muted">HU-038 · Datos agregados — sin identificación individual</small>
+    </div>
+    <a href="{% url 'cuentas:dashboard_admin' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Volver al panel
+    </a>
+  </div>
+
+  {# ── Filtro ──────────────────────────────────────────────────────────────── #}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-12 col-md-3">
+          <label class="form-label small fw-semibold">Desde</label>
+          <input type="date" name="desde" class="form-control form-control-sm"
+                 value="{{ fecha_desde }}">
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label small fw-semibold">Hasta</label>
+          <input type="date" name="hasta" class="form-control form-control-sm"
+                 value="{{ fecha_hasta }}">
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="bi bi-funnel me-1"></i>Filtrar
+          </button>
+          <a href="?desde={{ fecha_desde }}&hasta={{ fecha_hasta }}&exportar=1"
+             class="btn btn-outline-success btn-sm flex-grow-1">
+            <i class="bi bi-download me-1"></i>CSV
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {# ── Tarjetas resumen ─────────────────────────────────────────────────────── #}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="fs-2 fw-bold text-primary">{{ total_global }}</div>
+        <div class="text-muted small">Total de accesos</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="fs-2 fw-bold text-secondary">{{ total_usuarios }}</div>
+        <div class="text-muted small">Pacientes distintos</div>
+      </div>
+    </div>
+    {% for f in filas %}
+      <div class="col-6 col-md-2">
+        <div class="card border-0 shadow-sm text-center py-3 h-100">
+          <i class="bi {{ f.icon }} fs-4 mb-1" style="color:{{ f.color }}"></i>
+          <div class="fs-3 fw-bold" style="color:{{ f.color }}">{{ f.total }}</div>
+          <div class="text-muted" style="font-size:.72rem;">{{ f.label }}</div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  {# ── Gráfico de barras ────────────────────────────────────────────────────── #}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 pt-3 pb-0">
+      <h6 class="fw-semibold mb-0">
+        <i class="bi bi-bar-chart me-1 text-primary"></i>
+        Accesos por herramienta en el periodo
+      </h6>
+    </div>
+    <div class="card-body" style="height:280px;">
+      <canvas id="chartBienestar"></canvas>
+    </div>
+  </div>
+
+  {# ── Tabla detallada ──────────────────────────────────────────────────────── #}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 pt-3 pb-0">
+      <h6 class="fw-semibold mb-0">
+        <i class="bi bi-table me-1 text-primary"></i>
+        Detalle por herramienta
+      </h6>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3">Herramienta</th>
+            <th class="text-center">Accesos en periodo</th>
+            <th class="text-center">Sesiones completadas<br><small class="fw-normal text-muted">(solo respiración)</small></th>
+            <th class="text-center">Duración promedio<br><small class="fw-normal text-muted">(sesiones de respiración)</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in filas %}
+            <tr>
+              <td class="ps-3">
+                <i class="bi {{ f.icon }} me-2" style="color:{{ f.color }}"></i>
+                <span class="fw-semibold">{{ f.label }}</span>
+              </td>
+              <td class="text-center">
+                <span class="fw-bold fs-5">{{ f.total }}</span>
+              </td>
+              <td class="text-center">
+                {% if f.key == 'respiracion' %}
+                  {{ f.sesiones_completadas }}
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if f.key == 'respiracion' and f.avg_dur_seg %}
+                  <span class="fw-semibold text-primary">
+                    {{ f.avg_dur_min }}
+                    <small class="text-muted fw-normal">({{ f.avg_dur_seg }}s)</small>
+                  </span>
+                {% elif f.key == 'respiracion' %}
+                  <span class="text-muted small">Sin datos de duración</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <p class="text-muted small">
+    <i class="bi bi-shield-lock me-1"></i>
+    Los datos se presentan de forma agregada. No se identifica a ningún paciente individualmente.
+    La duración promedio corresponde únicamente a sesiones de respiración completadas.
+  </p>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+        integrity="sha512-CQBWl4fJHWbryGE+Pc3UJWW1h3WHFQiCJQWoKHXeJz6eFaLsm5T3M+sHLEBmHY5D0PUqS7vJGfLU6sMf6M0A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+(function () {
+  const ctx = document.getElementById('chartBienestar');
+  if (!ctx) return;
+
+  const labels = {{ chart_labels|safe }};
+  const values = {{ chart_values|safe }};
+  const colors = {{ chart_colors|safe }};
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Accesos',
+        data: values,
+        backgroundColor: colors.map(c => c + 'CC'),  // 80% opacity
+        borderColor: colors,
+        borderWidth: 2,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.y} acceso${ctx.parsed.y !== 1 ? 's' : ''}`,
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            precision: 0,
+          },
+          grid: { color: 'rgba(0,0,0,.06)' }
+        },
+        x: {
+          grid: { display: false }
+        }
+      }
+    }
+  });
+})();
+</script>
+
+{% endblock contenido %}

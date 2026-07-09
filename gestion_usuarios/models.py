@@ -24,7 +24,7 @@ class InvitacionPaciente(models.Model):
 
     especialista = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='invitaciones_enviadas'
     )
     nombre_paciente = models.CharField(max_length=150)

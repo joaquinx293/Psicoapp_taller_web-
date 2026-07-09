@@ -72,6 +72,31 @@
         </div>
       </div>
 
+      <!-- Especialidad (solo visible cuando rol = especialista) -->
+      <div id="campo-especialidad" class="mb-4"
+           style="{% if usuario.rol != 'especialista' %}display:none;{% endif %}">
+        <label for="especialidad" class="form-label">Especialidad</label>
+        <select id="especialidad" name="especialidad"
+                class="form-select {% if errores.especialidad %}is-invalid{% endif %}">
+          <option value="">— Sin especialidad —</option>
+          {% for esp in especialidades %}
+            <option value="{{ esp.pk }}"
+              {% if usuario.especialidad_id == esp.pk %}selected{% endif %}>
+              {{ esp.nombre }}
+            </option>
+          {% endfor %}
+        </select>
+        {% if errores.especialidad %}
+          <div class="invalid-feedback">{{ errores.especialidad }}</div>
+        {% endif %}
+        {% if not especialidades %}
+          <div class="form-text text-warning">
+            No hay especialidades creadas.
+            <a href="{% url 'cuentas:gestionar_especialidades' %}">Crear especialidades</a>
+          </div>
+        {% endif %}
+      </div>
+
       <p class="text-muted small mb-3">
         <strong>Username:</strong> {{ usuario.username }}
         (no editable desde aquí)
@@ -81,6 +106,17 @@
         <button type="submit" class="btn btn-danger">Guardar cambios</button>
         <a href="{% url 'cuentas:dashboard_admin' %}" class="btn btn-outline-secondary">Cancelar</a>
       </div>
+
+      <script>
+      (function () {
+        var rolSelect    = document.getElementById('rol');
+        var campoEsp     = document.getElementById('campo-especialidad');
+        function toggleEsp() {
+          campoEsp.style.display = rolSelect.value === 'especialista' ? '' : 'none';
+        }
+        rolSelect.addEventListener('change', toggleEsp);
+      })();
+      </script>
     </form>
   </div>
 </div>

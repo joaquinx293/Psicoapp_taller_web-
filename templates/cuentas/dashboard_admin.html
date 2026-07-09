@@ -80,6 +80,28 @@
   </div>
 </div>
 
+<!-- ═══ ACCESOS RÁPIDOS ═══ -->
+<div class="d-flex flex-wrap gap-2 mb-4">
+  <a href="{% url 'cuentas:gestionar_especialidades' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-tag me-1"></i>Especialidades
+  </a>
+  <a href="{% url 'cuentas:log_sesiones' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-person-check me-1"></i>Inicios de sesión
+  </a>
+  <a href="{% url 'cuentas:log_bienestar' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-heart-pulse me-1"></i>Uso de bienestar
+  </a>
+  <a href="{% url 'cuentas:gestionar_musica' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-music-note-list me-1"></i>Música ambiental
+  </a>
+  <a href="{% url 'cuentas:gestionar_datos_dia' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-lightbulb me-1"></i>Datos del día
+  </a>
+  <a href="{% url 'mantenedores:terminos' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-file-text me-1"></i>Términos y condiciones
+  </a>
+</div>
+
 <!-- ═══ SOLICITUDES DE BAJA ═══ -->
 {% if solicitudes_baja %}
 <h5 class="section-title mb-3">
@@ -327,7 +349,7 @@
 
               {% if u.rol == 'paciente' %}
                 <a href="{% url 'cuentas:configurar_visibilidad_paciente' u.pk %}"
-                   class="btn btn-sm btn-outline-secondary">Permisos</a>
+                   class="btn btn-sm btn-outline-danger">Permisos</a>
               {% endif %}
 
               {% if u.rol == 'especialista' and u.estado == 'pendiente' %}

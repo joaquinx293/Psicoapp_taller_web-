@@ -157,64 +157,129 @@
       actualizarCampos();
     </script>
 
-    <!-- Importar pregunta de otro cuestionario -->
-    {% if preguntas_importables %}
+    <!-- Importar pregunta de otro cuestionario (AJAX) -->
+    {% if tiene_otros %}
     <div class="card shadow-sm">
       <div class="card-body">
-        <h6 class="mb-3">Importar pregunta</h6>
-        <p class="text-muted small mb-3">Copia una pregunta de otro cuestionario tuyo.</p>
+        <h6 class="mb-1">Importar pregunta</h6>
+        <p class="text-muted small mb-3">Busca y copia una pregunta de otro cuestionario tuyo.</p>
 
-        <!-- Filtro texto para el selector -->
-        <input type="text" id="filtro-importar"
-               class="form-control form-control-sm mb-2"
-               placeholder="Buscar pregunta o cuestionario...">
-
-        <form method="post" action="{% url 'cuestionarios:importar_pregunta' cuestionario.pk %}">
+        <form method="post" action="{% url 'cuestionarios:importar_pregunta' cuestionario.pk %}" id="form-importar">
           {% csrf_token %}
-          <div class="mb-3">
-            <select name="pregunta_id" id="select-importar" class="form-select form-select-sm" required>
-              <option value="">— Selecciona una pregunta —</option>
-              {% for p in preguntas_importables %}
-              <option value="{{ p.pk }}"
-                      data-texto="{{ p.texto|lower }} {{ p.cuestionario.nombre|lower }}">
-                [{{ p.cuestionario.nombre|truncatechars:20 }}] {{ p.texto|truncatechars:50 }}
-              </option>
-              {% endfor %}
-            </select>
+          <input type="hidden" name="pregunta_id" id="importar-pregunta-id">
+
+          <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" id="importar-buscar"
+                   class="form-control"
+                   placeholder="Buscar por texto o cuestionario..."
+                   autocomplete="off">
           </div>
-          <p id="sin-resultados-importar" class="text-muted small" style="display:none;">
+
+          <!-- Dropdown con resultados AJAX -->
+          <div id="importar-resultados"
+               class="list-group mb-2 shadow-sm"
+               style="display:none; max-height:220px; overflow-y:auto; position:relative; z-index:10;">
+          </div>
+          <p id="importar-sin-res" class="text-muted small mb-2" style="display:none;">
             No se encontraron preguntas.
           </p>
-          <button type="submit" class="btn btn-outline-secondary w-100 btn-sm">Importar copia</button>
+
+          <!-- Pregunta seleccionada -->
+          <div id="importar-seleccionado"
+               class="alert alert-success py-2 small mb-2 d-flex justify-content-between align-items-start"
+               style="display:none !important;">
+            <span><strong>Seleccionada:</strong> <span id="importar-texto-sel"></span></span>
+            <button type="button" id="importar-limpiar"
+                    class="btn-close ms-2 flex-shrink-0" aria-label="Limpiar"></button>
+          </div>
+
+          <button type="submit" id="btn-importar"
+                  class="btn btn-outline-secondary w-100 btn-sm" disabled>
+            Importar copia
+          </button>
         </form>
-
-        <script>
-        (function () {
-          const filtroInput = document.getElementById('filtro-importar');
-          const selectEl    = document.getElementById('select-importar');
-          const sinRes      = document.getElementById('sin-resultados-importar');
-          if (!filtroInput || !selectEl) return;
-
-          filtroInput.addEventListener('input', function () {
-            const q = this.value.trim().toLowerCase();
-            let vis = 0;
-            Array.from(selectEl.options).forEach(opt => {
-              if (!opt.value) return; // placeholder
-              const texto = opt.getAttribute('data-texto') || '';
-              const ok = !q || texto.includes(q);
-              opt.hidden = !ok;
-              if (ok) vis++;
-            });
-            // Reset selection if current option is hidden
-            if (selectEl.selectedOptions[0] && selectEl.selectedOptions[0].hidden) {
-              selectEl.value = '';
-            }
-            sinRes.style.display = vis === 0 ? '' : 'none';
-          });
-        })();
-        </script>
       </div>
     </div>
+
+    <script>
+    (function () {
+      const searchEl   = document.getElementById('importar-buscar');
+      const resEl      = document.getElementById('importar-resultados');
+      const sinResEl   = document.getElementById('importar-sin-res');
+      const selEl      = document.getElementById('importar-seleccionado');
+      const selTextoEl = document.getElementById('importar-texto-sel');
+      const limpiarBtn = document.getElementById('importar-limpiar');
+      const hiddenEl   = document.getElementById('importar-pregunta-id');
+      const submitBtn  = document.getElementById('btn-importar');
+      const API        = '{% url "cuestionarios:buscar_pregunta" cuestionario.pk %}';
+
+      let timer = null;
+
+      function limpiar() {
+        hiddenEl.value   = '';
+        submitBtn.disabled = true;
+        selEl.style.setProperty('display', 'none', 'important');
+        searchEl.value   = '';
+        resEl.style.display = 'none';
+        sinResEl.style.display = 'none';
+      }
+
+      function seleccionar(item) {
+        hiddenEl.value = item.id;
+        selTextoEl.textContent = '[' + item.cuestionario + '] ' + item.texto;
+        selEl.style.removeProperty('display');
+        selEl.style.display = 'flex';
+        submitBtn.disabled = false;
+        resEl.style.display = 'none';
+        searchEl.value = '';
+      }
+
+      function buscar(q) {
+        if (q.length < 2) {
+          resEl.style.display = 'none';
+          sinResEl.style.display = 'none';
+          return;
+        }
+        fetch(API + '?q=' + encodeURIComponent(q))
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            resEl.innerHTML = '';
+            if (!data.results || data.results.length === 0) {
+              resEl.style.display = 'none';
+              sinResEl.style.display = '';
+              return;
+            }
+            sinResEl.style.display = 'none';
+            data.results.forEach(function (item) {
+              var btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = 'list-group-item list-group-item-action py-2 small';
+              btn.innerHTML =
+                '<span class="text-muted">[' + item.cuestionario + ']</span> ' + item.texto;
+              btn.addEventListener('click', function () { seleccionar(item); });
+              resEl.appendChild(btn);
+            });
+            resEl.style.display = '';
+          })
+          .catch(function () {});
+      }
+
+      searchEl.addEventListener('input', function () {
+        clearTimeout(timer);
+        var q = this.value.trim();
+        timer = setTimeout(function () { buscar(q); }, 300);
+      });
+
+      limpiarBtn.addEventListener('click', limpiar);
+
+      document.addEventListener('click', function (e) {
+        if (!resEl.contains(e.target) && e.target !== searchEl) {
+          resEl.style.display = 'none';
+        }
+      });
+    })();
+    </script>
     {% endif %}
   </div>
   {% endif %}

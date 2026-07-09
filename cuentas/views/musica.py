@@ -3,6 +3,7 @@ import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
@@ -69,21 +70,26 @@ def gestionar_musica(request):
                     request,
                     f'El archivo pesa {mb:.1f} MB. El máximo permitido es {TAMANIO_MAX_MB} MB.'
                 )
+            elif PistaMusical.objects.filter(titulo__iexact=titulo).exists():
+                messages.error(request, f'Ya existe una pista con el título "{titulo}".')
             else:
-                orden_max = PistaMusical.objects.count()
-                pista = PistaMusical.objects.create(
-                    titulo=titulo,
-                    archivo=archivo,
-                    orden=orden_max,
-                    activa=True,
-                )
-                _log(
-                    request.user,
-                    LogCambioMusica.ACCION_SUBIR,
-                    titulo,
-                    detalle=f'{extension.lstrip(".")} · {archivo.size // 1024} KB'
-                )
-                messages.success(request, f'Pista "{titulo}" agregada correctamente.')
+                try:
+                    orden_max = PistaMusical.objects.count()
+                    pista = PistaMusical.objects.create(
+                        titulo=titulo,
+                        archivo=archivo,
+                        orden=orden_max,
+                        activa=True,
+                    )
+                    _log(
+                        request.user,
+                        LogCambioMusica.ACCION_SUBIR,
+                        titulo,
+                        detalle=f'{extension.lstrip(".")} · {archivo.size // 1024} KB'
+                    )
+                    messages.success(request, f'Pista "{titulo}" agregada correctamente.')
+                except IntegrityError:
+                    messages.error(request, f'Ya existe una pista con el título "{titulo}".')
 
         return redirect('cuentas:gestionar_musica')
 

@@ -2,6 +2,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 from django.views.decorators.http import require_POST
 
 from cuentas.models import DatoDelDia
@@ -56,13 +57,16 @@ def gestionar_datos_dia(request):
         errores = _validar_dato(texto, fuente)
 
         if not errores:
-            DatoDelDia.objects.create(
-                texto=texto.strip(),
-                fuente=fuente.strip(),
-                activo=True,
-            )
-            messages.success(request, 'Dato del día creado correctamente.')
-            return redirect('cuentas:gestionar_datos_dia')
+            try:
+                DatoDelDia.objects.create(
+                    texto=texto.strip(),
+                    fuente=fuente.strip(),
+                    activo=True,
+                )
+                messages.success(request, 'Dato del día creado correctamente.')
+                return redirect('cuentas:gestionar_datos_dia')
+            except IntegrityError:
+                errores['texto'] = 'Ya existe un dato con ese mismo texto.'
 
     datos         = DatoDelDia.objects.all()
     total_activos = datos.filter(activo=True).count()
@@ -96,11 +100,14 @@ def editar_dato_dia(request, pk):
         errores = _validar_dato(texto, fuente, instancia_actual=dato)
 
         if not errores:
-            dato.texto  = texto.strip()
-            dato.fuente = fuente.strip()
-            dato.save(update_fields=['texto', 'fuente', 'fecha_modificacion'])
-            messages.success(request, 'Dato del día actualizado.')
-            return redirect('cuentas:gestionar_datos_dia')
+            try:
+                dato.texto  = texto.strip()
+                dato.fuente = fuente.strip()
+                dato.save(update_fields=['texto', 'fuente', 'fecha_modificacion'])
+                messages.success(request, 'Dato del día actualizado.')
+                return redirect('cuentas:gestionar_datos_dia')
+            except IntegrityError:
+                errores['texto'] = 'Ya existe un dato con ese mismo texto.'
 
     return render(request, 'cuentas/editar_dato_dia.html', {
         'dato':         dato,

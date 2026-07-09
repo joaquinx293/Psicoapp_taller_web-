@@ -18,4 +18,7 @@ urlpatterns = [
 
     # HU-025: Configurar pregunta diaria por paciente
     path('pacientes/<int:paciente_id>/pregunta-diaria/', views.pregunta_diaria, name='pregunta_diaria'),
+
+    # HU-035: Tasa de completitud de cuestionarios del paciente
+    path('pacientes/<int:paciente_id>/completitud/', views.completitud_paciente, name='completitud_paciente'),
 ]

@@ -19,6 +19,9 @@ class CuentasConfig(AppConfig):
         if os.environ.get('RUN_MAIN') != 'true':
             return
 
+        # HU-037: registrar signal de inicio de sesión
+        from . import signals  # noqa: F401
+
         try:
             from apscheduler.schedulers.background import BackgroundScheduler
             from apscheduler.triggers.interval import IntervalTrigger

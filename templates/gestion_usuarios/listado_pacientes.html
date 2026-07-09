@@ -100,8 +100,10 @@
                    class="btn btn-sm btn-outline-danger">Pregunta diaria</a>
                 <a href="{% url 'cuestionarios:ver_promedio_animo' inv.paciente.pk %}"
                    class="btn btn-sm btn-outline-danger">Promedio ánimo</a>
+                <a href="{% url 'gestion_usuarios:completitud_paciente' inv.paciente.pk %}"
+                   class="btn btn-sm btn-outline-danger">Completitud</a>
                 <a href="{% url 'cuentas:configurar_visibilidad_paciente' inv.paciente.pk %}"
-                   class="btn btn-sm btn-outline-secondary">Permisos</a>
+                   class="btn btn-sm btn-outline-danger">Permisos</a>
               </div>
             {% elif inv.estado == 'pendiente' %}
               <a href="{% url 'cuestionarios:asignar_pendiente' inv.pk %}"

@@ -16,32 +16,45 @@ def invitar_paciente(request):
     if request.method == 'POST':
         form = InvitarPacienteForm(request.POST)
         if form.is_valid():
-            invitacion = form.save(commit=False)
-            invitacion.especialista = request.user
-            invitacion.save()  # el PIN se genera automáticamente en save()
+            correo = form.cleaned_data['correo_paciente']
+            ya_pendiente = InvitacionPaciente.objects.filter(
+                especialista=request.user,
+                correo_paciente=correo,
+                estado=InvitacionPaciente.PENDIENTE,
+            ).exists()
+            if ya_pendiente:
+                form.add_error(
+                    'correo_paciente',
+                    'Ya tienes una invitación pendiente para ese correo. '
+                    'Espera a que expire antes de enviar otra.'
+                )
+            else:
+                invitacion = form.save(commit=False)
+                invitacion.especialista = request.user
+                invitacion.save()  # el PIN se genera automáticamente en save()
 
-            send_mail(
-                'Invitacion a PsicoApp',
-                f'Hola {invitacion.nombre_paciente},\n\n'
-                f'{request.user.get_full_name() or request.user.username} '
-                f'te ha invitado a PsicoApp.\n\n'
-                f'Tu codigo de activacion es:\n\n'
-                f'    {invitacion.pin}\n\n'
-                f'Ingresa a PsicoApp, ve a la seccion "Fui invitado" '
-                f'e introduce tu correo y este codigo.\n\n'
-                f'Este codigo es valido por 24 horas.\n\n'
-                f'Saludos, equipo PsicoApp.',
-                'noreply@psicoapp.cl',
-                [invitacion.correo_paciente],
-                fail_silently=True,
-            )
+                send_mail(
+                    'Invitacion a PsicoApp',
+                    f'Hola {invitacion.nombre_paciente},\n\n'
+                    f'{request.user.get_full_name() or request.user.username} '
+                    f'te ha invitado a PsicoApp.\n\n'
+                    f'Tu codigo de activacion es:\n\n'
+                    f'    {invitacion.pin}\n\n'
+                    f'Ingresa a PsicoApp, ve a la seccion "Fui invitado" '
+                    f'e introduce tu correo y este codigo.\n\n'
+                    f'Este codigo es valido por 24 horas.\n\n'
+                    f'Saludos, equipo PsicoApp.',
+                    'noreply@psicoapp.cl',
+                    [invitacion.correo_paciente],
+                    fail_silently=True,
+                )
 
-            messages.success(
-                request,
-                f'Invitacion enviada a {invitacion.correo_paciente}. '
-                f'PIN de activacion: {invitacion.pin}'
-            )
-            return redirect('gestion_usuarios:listado_pacientes')
+                messages.success(
+                    request,
+                    f'Invitacion enviada a {invitacion.correo_paciente}. '
+                    f'PIN de activacion: {invitacion.pin}'
+                )
+                return redirect('gestion_usuarios:listado_pacientes')
     else:
         form = InvitarPacienteForm()
 
