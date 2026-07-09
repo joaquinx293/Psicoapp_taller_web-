@@ -19,38 +19,49 @@
   <!-- Datos personales -->
   <div class="col-md-6">
     <div class="card shadow-sm h-100">
-      <div class="card-header fw-semibold">Datos personales</div>
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        Datos personales
+        {% if prefs and not prefs.editar_datos_habilitado %}
+          <span class="badge bg-secondary">🔒 Bloqueado</span>
+        {% endif %}
+      </div>
       <div class="card-body">
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="accion" value="datos">
-
-          <div class="mb-3">
-            <label for="first_name" class="form-label">Nombre</label>
-            <input type="text" id="first_name" name="first_name"
-                   class="form-control"
-                   value="{{ usuario.first_name }}">
+        {% if prefs and not prefs.editar_datos_habilitado %}
+          <div class="alert alert-warning py-2 small mb-0">
+            Tu especialista ha desactivado la edición de datos personales. Consulta con tu especialista para realizar cambios.
           </div>
+        {% else %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="datos">
 
-          <div class="mb-3">
-            <label for="last_name" class="form-label">Apellido</label>
-            <input type="text" id="last_name" name="last_name"
-                   class="form-control"
-                   value="{{ usuario.last_name }}">
-          </div>
+            <div class="mb-3">
+              <label for="first_name" class="form-label">Nombre</label>
+              <input type="text" id="first_name" name="first_name"
+                     class="form-control"
+                     value="{{ usuario.first_name }}">
+            </div>
 
-          <div class="mb-3">
-            <label for="email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
-            <input type="email" id="email" name="email"
-                   class="form-control {% if errores.email %}is-invalid{% endif %}"
-                   value="{{ usuario.email }}" required>
-            {% if errores.email %}
-              <div class="invalid-feedback">{{ errores.email }}</div>
-            {% endif %}
-          </div>
+            <div class="mb-3">
+              <label for="last_name" class="form-label">Apellido</label>
+              <input type="text" id="last_name" name="last_name"
+                     class="form-control"
+                     value="{{ usuario.last_name }}">
+            </div>
 
-          <button type="submit" class="btn btn-danger">Guardar cambios</button>
-        </form>
+            <div class="mb-3">
+              <label for="email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+              <input type="email" id="email" name="email"
+                     class="form-control {% if errores.email %}is-invalid{% endif %}"
+                     value="{{ usuario.email }}" required>
+              {% if errores.email %}
+                <div class="invalid-feedback">{{ errores.email }}</div>
+              {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-danger">Guardar cambios</button>
+          </form>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -58,49 +69,136 @@
   <!-- Cambiar contraseña -->
   <div class="col-md-6">
     <div class="card shadow-sm h-100">
-      <div class="card-header fw-semibold">Cambiar contraseña</div>
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        Cambiar contraseña
+        {% if prefs and not prefs.cambiar_contrasena_habilitado %}
+          <span class="badge bg-secondary">🔒 Bloqueado</span>
+        {% endif %}
+      </div>
       <div class="card-body">
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="accion" value="contrasena">
-
-          <div class="mb-3">
-            <label for="contrasena_actual" class="form-label">Contraseña actual</label>
-            <input type="password" id="contrasena_actual" name="contrasena_actual"
-                   class="form-control {% if errores.contrasena_actual %}is-invalid{% endif %}"
-                   required>
-            {% if errores.contrasena_actual %}
-              <div class="invalid-feedback">{{ errores.contrasena_actual }}</div>
-            {% endif %}
+        {% if prefs and not prefs.cambiar_contrasena_habilitado %}
+          <div class="alert alert-warning py-2 small mb-0">
+            Tu especialista ha desactivado el cambio de contraseña. Consulta con tu especialista para realizarlo.
           </div>
+        {% else %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="contrasena">
 
-          <div class="mb-3">
-            <label for="nueva_contrasena" class="form-label">Nueva contraseña</label>
-            <input type="password" id="nueva_contrasena" name="nueva_contrasena"
-                   class="form-control {% if errores.nueva_contrasena %}is-invalid{% endif %}"
-                   minlength="8" required>
-            {% if errores.nueva_contrasena %}
-              <div class="invalid-feedback">{{ errores.nueva_contrasena }}</div>
-            {% endif %}
-            <div class="form-text">Mínimo 8 caracteres.</div>
-          </div>
+            <div class="mb-3">
+              <label for="contrasena_actual" class="form-label">Contraseña actual</label>
+              <input type="password" id="contrasena_actual" name="contrasena_actual"
+                     class="form-control {% if errores.contrasena_actual %}is-invalid{% endif %}"
+                     required>
+              {% if errores.contrasena_actual %}
+                <div class="invalid-feedback">{{ errores.contrasena_actual }}</div>
+              {% endif %}
+            </div>
 
-          <div class="mb-3">
-            <label for="confirmar_contrasena" class="form-label">Confirmar nueva contraseña</label>
-            <input type="password" id="confirmar_contrasena" name="confirmar_contrasena"
-                   class="form-control {% if errores.confirmar_contrasena %}is-invalid{% endif %}"
-                   required>
-            {% if errores.confirmar_contrasena %}
-              <div class="invalid-feedback">{{ errores.confirmar_contrasena }}</div>
-            {% endif %}
-          </div>
+            <div class="mb-3">
+              <label for="nueva_contrasena" class="form-label">Nueva contraseña</label>
+              <input type="password" id="nueva_contrasena" name="nueva_contrasena"
+                     class="form-control {% if errores.nueva_contrasena %}is-invalid{% endif %}"
+                     minlength="8" required>
+              {% if errores.nueva_contrasena %}
+                <div class="invalid-feedback">{{ errores.nueva_contrasena }}</div>
+              {% endif %}
+              <div class="form-text">Mínimo 8 caracteres.</div>
+            </div>
 
-          <button type="submit" class="btn btn-outline-danger">Actualizar contraseña</button>
-        </form>
+            <div class="mb-3">
+              <label for="confirmar_contrasena" class="form-label">Confirmar nueva contraseña</label>
+              <input type="password" id="confirmar_contrasena" name="confirmar_contrasena"
+                     class="form-control {% if errores.confirmar_contrasena %}is-invalid{% endif %}"
+                     required>
+              {% if errores.confirmar_contrasena %}
+                <div class="invalid-feedback">{{ errores.confirmar_contrasena }}</div>
+              {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-outline-danger">Actualizar contraseña</button>
+          </form>
+        {% endif %}
       </div>
     </div>
   </div>
 
+</div>
+
+<!-- ── Recordatorio por correo ── -->
+<div class="row g-4 mt-1">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        🔔 Recordatorio por correo
+        {% if prefs and not prefs.configurar_recordatorio_habilitado %}
+          <span class="badge bg-secondary">🔒 Bloqueado</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        {% if prefs and not prefs.configurar_recordatorio_habilitado %}
+          <div class="alert alert-warning py-2 small mb-2">
+            Tu especialista gestiona este recordatorio. No puedes modificarlo.
+          </div>
+          {% if recordatorio and recordatorio.activo %}
+            <p class="mb-0 small">Recordatorio activo — se envía a las <strong>{{ recordatorio.hora|time:"H:i" }}</strong></p>
+          {% else %}
+            <p class="mb-0 small text-muted">Sin recordatorio activo por el momento.</p>
+          {% endif %}
+        {% else %}
+          <p class="text-muted small mb-3">
+            Recibe un correo diario para recordarte registrar tu estado de ánimo.
+          </p>
+          {% if recordatorio and recordatorio.activo %}
+            <p class="mb-3">
+              Activo — se envía a las <strong>{{ recordatorio.hora|time:"H:i" }}</strong>
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+              <form method="post" action="{% url 'cuentas:configurar_recordatorio' %}" class="d-flex gap-2 align-items-center">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="guardar">
+                <input type="time" name="hora" value="{{ recordatorio.hora|time:'H:i' }}"
+                       class="form-control form-control-sm" style="width:110px;" required>
+                <button type="submit" class="btn btn-sm btn-outline-danger">Cambiar hora</button>
+              </form>
+              <form method="post" action="{% url 'cuentas:configurar_recordatorio' %}">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="desactivar">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Desactivar</button>
+              </form>
+            </div>
+          {% else %}
+            <form method="post" action="{% url 'cuentas:configurar_recordatorio' %}">
+              {% csrf_token %}
+              <input type="hidden" name="accion" value="guardar">
+              <div class="d-flex gap-2 align-items-center">
+                <input type="time" name="hora" value="09:00"
+                       class="form-control form-control-sm" style="width:110px;" required>
+                <button type="submit" class="btn btn-danger btn-sm">Activar</button>
+              </div>
+            </form>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Eliminar cuenta ── -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100 border-danger" style="border-style: dashed !important;">
+      <div class="card-header fw-semibold text-danger">Zona de peligro</div>
+      <div class="card-body d-flex flex-column">
+        <p class="text-muted small mb-3">
+          Puedes solicitar la eliminación de tu cuenta. Un administrador revisará tu solicitud.
+          Tus respuestas se conservarán de forma anonimizada.
+        </p>
+        <a href="{% url 'cuentas:confirmar_eliminacion' %}"
+           class="btn btn-outline-danger btn-sm mt-auto align-self-start">
+          Solicitar eliminación de cuenta
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 
 {% endblock %}

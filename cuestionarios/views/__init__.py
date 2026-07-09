@@ -21,3 +21,5 @@ from .historial_animo import historial_animo                                   #
 from .promedio_animo import ver_promedio_animo                                 # HU-034
 
 from .publicar_cuestionario import publicar_cuestionario, archivar_cuestionario  # Cambio 2
+
+from .reporte_adherencia import ver_adherencia_paciente #HU-035

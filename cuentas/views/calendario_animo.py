@@ -5,7 +5,7 @@ from datetime import date
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from ..models import RegistroAnimo, Usuario
+from ..models import RegistroAnimo, Usuario, PreferenciasVisibilidad
 
 
 
@@ -65,6 +65,12 @@ def calendario_animo(request, paciente_id=None):
             return redirect('cuentas:redireccion')
         paciente = request.user
         vista_especialista = False
+        # Verificar permiso de visibilidad
+        prefs, _ = PreferenciasVisibilidad.objects.get_or_create(paciente=paciente)
+        if not prefs.ver_calendario_habilitado:
+            return render(request, 'cuentas/seccion_no_disponible.html', {
+                'seccion': 'el calendario emocional',
+            })
     try:
         año = int(request.GET.get('año', hoy.year))
         mes  = int(request.GET.get('mes',  hoy.month))

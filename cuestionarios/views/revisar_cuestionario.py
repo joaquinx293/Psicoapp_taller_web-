@@ -28,20 +28,6 @@ def revisar_cuestionario(request, pk):
             )
             return redirect('cuentas:dashboard_admin')
 
-        elif accion == 'rechazar':
-            motivo = request.POST.get('motivo', '').strip()
-            if not motivo:
-                messages.error(request, 'Debes ingresar un motivo de rechazo.')
-            else:
-                cuestionario.estado = Cuestionario.RECHAZADO
-                cuestionario.es_publico = False
-                cuestionario.save()
-                messages.warning(
-                    request,
-                    f'"{cuestionario.nombre}" fue rechazado.'
-                )
-                return redirect('cuentas:dashboard_admin')
-
     preguntas = cuestionario.preguntas.filter(activa=True).order_by('orden', 'id')
     return render(request, 'cuestionarios/revisar_cuestionario.html', {
         'cuestionario': cuestionario,

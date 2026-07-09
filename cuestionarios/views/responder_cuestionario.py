@@ -34,13 +34,27 @@ def responder_cuestionario(request, pk):
 
     cuestionario = get_object_or_404(Cuestionario, pk=pk)
 
-    if not AsignacionCuestionario.objects.filter(
+    asignacion = AsignacionCuestionario.objects.filter(
         paciente=request.user,
         cuestionario=cuestionario,
         activa=True
-    ).exists():
+    ).first()
+    if not asignacion:
         messages.error(request, 'Este cuestionario no está disponible para ti.')
         return redirect('cuestionarios:mis_cuestionarios_paciente')
+
+    # Control de intentos máximos (0 = ilimitado)
+    if asignacion.intentos_maximos > 0:
+        intentos_usados = RespuestaCuestionario.objects.filter(
+            paciente=request.user,
+            cuestionario=cuestionario,
+        ).count()
+        if intentos_usados >= asignacion.intentos_maximos:
+            messages.error(
+                request,
+                f'Ya usaste los {asignacion.intentos_maximos} intento(s) permitidos para este cuestionario.',
+            )
+            return redirect('cuestionarios:mis_cuestionarios_paciente')
 
     todas_las_preguntas = list(
         cuestionario.preguntas.filter(activa=True).order_by('orden', 'id')

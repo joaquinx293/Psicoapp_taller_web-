@@ -4,11 +4,11 @@
 {% block contenido %}
 <style>
   .animo-btn {
-    width: 56px;
-    height: 56px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    border: 3px solid #dee2e6;
-    font-size: 1.2rem;
+    border: 2px solid #dee2e6;
+    font-size: .85rem;
     font-weight: 700;
     cursor: pointer;
     transition: all .15s ease;
@@ -21,7 +21,14 @@
     background: #C0392B;
     color: white;
     transform: scale(1.2);
-    box-shadow: 0 0 0 4px rgba(192,57,43,.25);
+    box-shadow: 0 0 0 3px rgba(192,57,43,.25);
+  }
+  /* Escala de ánimo: más grande en pantallas medianas y arriba */
+  @media (min-width: 400px) {
+    .animo-btn { width: 42px; height: 42px; font-size: 1rem; }
+  }
+  @media (min-width: 560px) {
+    .animo-btn { width: 52px; height: 52px; font-size: 1.15rem; border-width: 3px; }
   }
   .etiqueta-animo {
     font-size: 1.1rem;

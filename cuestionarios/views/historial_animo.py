@@ -1,29 +1,35 @@
 import json
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 
-# ¡AHORA IMPORTAMOS DESDE CUENTAS, DONDE JOAQUÍN CREÓ EL MODELO!
-from cuentas.models import RegistroAnimo 
+from cuentas.models import RegistroAnimo, PreferenciasVisibilidad
+
+
+def _get_prefs(paciente):
+    prefs, _ = PreferenciasVisibilidad.objects.get_or_create(paciente=paciente)
+    return prefs
+
 
 @login_required
 def historial_animo(request):
-    # Traemos los registros de Joaquín
+    if not request.user.es_paciente():
+        return redirect('cuentas:redireccion')
+
+    # Verificar permiso de visibilidad
+    prefs = _get_prefs(request.user)
+    if not prefs.ver_historial_animo_habilitado:
+        return render(request, 'cuestionarios/seccion_no_disponible.html', {
+            'seccion': 'el historial de ánimo',
+        })
+
     registros_queryset = RegistroAnimo.objects.filter(paciente=request.user)
-    
-    # Para el gráfico, ordenamos cronológicamente (el más antiguo primero a la izquierda)
-    registros_grafico = list(registros_queryset.order_by('fecha'))
+    registros_grafico  = list(registros_queryset.order_by('fecha'))
 
-    fechas = []
-    niveles = []
+    fechas  = [r.fecha.strftime('%d-%m-%Y') for r in registros_grafico]
+    niveles = [r.valor for r in registros_grafico]
 
-    for registro in registros_grafico:
-        fechas.append(registro.fecha.strftime('%d-%m-%Y'))
-        niveles.append(registro.valor) # Usamos "valor" (1-10) de Joaquín
-
-    contexto = {
-        'fechas_json': json.dumps(fechas),
-        'niveles_json': json.dumps(niveles),
-        'registros_tabla': registros_queryset # La tabla muestra el más reciente primero
-    }
-    
-    return render(request, 'cuestionarios/historial_animo.html', contexto)
+    return render(request, 'cuestionarios/historial_animo.html', {
+        'fechas_json':    json.dumps(fechas),
+        'niveles_json':   json.dumps(niveles),
+        'registros_tabla': registros_queryset,
+    })

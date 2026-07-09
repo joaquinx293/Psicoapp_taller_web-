@@ -25,7 +25,7 @@ def asignar_pendiente(request, invitacion_pk):
         Cuestionario.objects.filter(estado=Cuestionario.APROBADO) |
         Cuestionario.objects.filter(
             especialista=request.user,
-            estado__in=[Cuestionario.BORRADOR, Cuestionario.APROBADO, Cuestionario.RECHAZADO]
+            estado__in=[Cuestionario.BORRADOR, Cuestionario.APROBADO]
         )
     ).distinct()
 

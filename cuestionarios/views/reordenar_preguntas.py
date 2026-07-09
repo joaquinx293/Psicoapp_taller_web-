@@ -16,7 +16,7 @@ def reordenar_preguntas(request, pk):
         especialista=request.user,
         subtipo=Cuestionario.SUBTIPO_PERSONALIZADO,
     )
-    if cuestionario.estado not in (Cuestionario.BORRADOR, Cuestionario.RECHAZADO):
+    if cuestionario.estado != Cuestionario.BORRADOR:
         return redirect('cuestionarios:detalle', pk=pk)
 
     if not request.user.es_especialista():
@@ -37,7 +37,7 @@ def guardar_orden(request, pk):
         subtipo=Cuestionario.SUBTIPO_PERSONALIZADO,
     )
 
-    if cuestionario.estado not in (Cuestionario.BORRADOR, Cuestionario.RECHAZADO):
+    if cuestionario.estado != Cuestionario.BORRADOR:
         return JsonResponse({'ok': False, 'error': 'Cuestionario no editable.'}, status=403)
 
     try:

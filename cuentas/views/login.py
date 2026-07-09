@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 
 from ..models import RegistroAnimo, RespuestaPreguntaDiaria, RecordatorioEmail, DatoDelDia, DatoFavorito
+from cuestionarios.models import AsignacionCuestionario, RespuestaCuestionario
 
 
 @login_required
@@ -52,12 +53,22 @@ def perfil_paciente(request):
     # HU-032 + HU-030: Dato del día y estado de favorito
     dato_del_dia = None
     dato_es_favorito = False
+    cuestionarios_pendientes = 0
     if request.user.es_paciente():
         dato_del_dia = DatoDelDia.dato_de_hoy()
         if dato_del_dia:
             dato_es_favorito = DatoFavorito.objects.filter(
                 paciente=request.user, dato=dato_del_dia
             ).exists()
+
+        # Cuestionarios asignados que aún no han sido respondidos
+        asignados_ids = AsignacionCuestionario.objects.filter(
+            paciente=request.user, activa=True
+        ).values_list('cuestionario_id', flat=True)
+        respondidos_ids = RespuestaCuestionario.objects.filter(
+            paciente=request.user, cuestionario_id__in=asignados_ids
+        ).values_list('cuestionario_id', flat=True).distinct()
+        cuestionarios_pendientes = len(set(asignados_ids) - set(respondidos_ids))
 
     return render(request, 'cuentas/perfil_paciente.html', {
         'animo_hoy': animo_hoy,
@@ -66,4 +77,5 @@ def perfil_paciente(request):
         'recordatorio': recordatorio,
         'dato_del_dia': dato_del_dia,
         'dato_es_favorito': dato_es_favorito,
+        'cuestionarios_pendientes': cuestionarios_pendientes,
     })

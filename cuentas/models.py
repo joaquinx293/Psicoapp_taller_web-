@@ -314,6 +314,50 @@ class LogCambioMusica(models.Model):
         return f"{self.fecha:%d/%m/%Y %H:%M} — {admin}: {self.get_accion_display()} → {self.pista_titulo}"
 
 
+class PreferenciasVisibilidad(models.Model):
+    """Permisos que el especialista configura para controlar qué ve el paciente."""
+    paciente = models.OneToOneField(
+        'Usuario',
+        on_delete=models.CASCADE,
+        related_name='preferencias_visibilidad',
+        limit_choices_to={'rol': 'paciente'},
+    )
+    ver_historial_animo_habilitado = models.BooleanField(
+        default=True,
+        verbose_name='Ver historial de ánimo',
+    )
+    ver_calendario_habilitado = models.BooleanField(
+        default=True,
+        verbose_name='Ver calendario emocional',
+    )
+    ver_promedio_animo_habilitado = models.BooleanField(
+        default=True,
+        verbose_name='Ver promedio de ánimo',
+    )
+    editar_datos_habilitado = models.BooleanField(
+        default=True,
+        verbose_name='Editar datos personales',
+        help_text='Permite al paciente cambiar su nombre y correo.',
+    )
+    cambiar_contrasena_habilitado = models.BooleanField(
+        default=True,
+        verbose_name='Cambiar contraseña',
+        help_text='Permite al paciente actualizar su contraseña.',
+    )
+    configurar_recordatorio_habilitado = models.BooleanField(
+        default=True,
+        verbose_name='Configurar recordatorio por correo',
+        help_text='Permite al paciente activar o cambiar la hora del recordatorio.',
+    )
+
+    class Meta:
+        verbose_name = 'Preferencias de visibilidad'
+        verbose_name_plural = 'Preferencias de visibilidad'
+
+    def __str__(self):
+        return f"Visibilidad de {self.paciente.username}"
+
+
 class Notificacion(models.Model):
     """HU-010: Notificaciones in-app. Incluye solicitudes de baja de pacientes y especialistas."""
 

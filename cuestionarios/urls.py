@@ -40,4 +40,7 @@ urlpatterns = [
     # Cambio 2: publicar y archivar cuestionario (especialista)
     path('<int:pk>/publicar/', views.publicar_cuestionario, name='publicar_cuestionario'),
     path('<int:pk>/archivar/', views.archivar_cuestionario, name='archivar_cuestionario'),
+    #HU-035
+    path('paciente/<int:paciente_pk>/adherencia/', views.ver_adherencia_paciente, name='ver_adherencia_paciente'),
+    
 ]
