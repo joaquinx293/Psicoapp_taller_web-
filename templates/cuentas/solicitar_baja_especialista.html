@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block titulo %}Solicitar baja — PsicoApp{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+
+    <div class="card border-danger shadow-sm">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Solicitar baja de mi cuenta</h5>
+      </div>
+      <div class="card-body">
+
+        <p class="text-muted mb-3">
+          Al enviar esta solicitud, un administrador la revisará antes de proceder.
+          Tu cuenta permanece activa hasta que se tome una decisión.
+        </p>
+        <ul class="text-muted small mb-4">
+          <li>Tu solicitud será revisada por el administrador del sistema.</li>
+          <li>Los datos clínicos de tus pacientes se conservarán en el sistema.</li>
+          <li>Tus cuestionarios creados permanecerán disponibles.</li>
+          <li>Recibirás una notificación cuando la solicitud sea procesada.</li>
+        </ul>
+
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="alert alert-{{ msg.tags }} py-2">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-danger">
+              Enviar solicitud de baja
+            </button>
+            <a href="{% url 'cuentas:redireccion' %}" class="btn btn-outline-secondary">
+              Cancelar
+            </a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

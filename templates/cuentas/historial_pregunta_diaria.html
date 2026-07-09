@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}Historial de preguntas diarias — PsicoApp{% endblock %}
+
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Mis respuestas diarias</h2>
+  <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-outline-secondary btn-sm">
+    ← Volver a mi perfil
+  </a>
+</div>
+
+{% if config %}
+  <p class="text-muted mb-4">
+    <strong>Pregunta activa:</strong> {{ config.texto }}
+    {% if not config.activa %}
+      <span class="badge bg-secondary ms-2">Inactiva</span>
+    {% endif %}
+  </p>
+{% endif %}
+
+{% if respuestas %}
+  <div class="card shadow-sm">
+    <ul class="list-group list-group-flush">
+      {% for r in respuestas %}
+      <li class="list-group-item">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="flex-grow-1">
+            <small class="text-muted fw-semibold">{{ r.fecha|date:"l d/m/Y"|capfirst }}</small>
+            <p class="mb-0 mt-1">{{ r.texto }}</p>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% else %}
+  <div class="alert alert-info">
+    Aún no tienes respuestas registradas.
+    {% if config and config.activa %}
+      <a href="{% url 'cuentas:responder_pregunta_diaria' %}">Responde la pregunta de hoy.</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

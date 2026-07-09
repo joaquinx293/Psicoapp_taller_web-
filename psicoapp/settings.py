@@ -138,3 +138,12 @@ DEFAULT_FROM_EMAIL  = 'PsicoApp <apsicoutal@gmail.com>'
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Media files (archivos subidos por el admin, ej. pistas de música)
+import os
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Permitir subida de archivos de hasta 100 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024   # 100 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024   # 100 MB

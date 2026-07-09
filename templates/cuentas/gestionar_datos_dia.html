@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block titulo %}Dato del día — PsicoApp{% endblock %}
+
+{% block contenido %}
+<style>
+  .section-title { border-bottom: 2px solid #C0392B; padding-bottom: 6px; color: #922B21; }
+  .table thead   { background-color: #C0392B; color: white; }
+  .contador-ok   { color: #155724; font-weight: 700; }
+  .contador-warn { color: #721c24; font-weight: 700; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <a href="{% url 'cuentas:dashboard_admin' %}" class="text-muted small">&larr; Volver al panel</a>
+    <h2 class="mt-1 mb-0">Dato del día</h2>
+  </div>
+</div>
+
+<!-- ── Contador de cobertura ─────────────────────────────────────────────── -->
+<div class="card shadow-sm mb-4
+  {% if total_activos >= minimo %}border-success{% else %}border-danger{% endif %}">
+  <div class="card-body py-3">
+    <div class="d-flex align-items-center gap-4 flex-wrap">
+      <div>
+        <span class="text-muted small">Datos activos</span><br>
+        <span class="{% if total_activos >= minimo %}contador-ok{% else %}contador-warn{% endif %} fs-3">
+          {{ total_activos }}
+        </span>
+        <span class="text-muted"> / {{ minimo }} requeridos</span>
+      </div>
+      <div class="flex-grow-1">
+        <div class="progress" style="height:10px;">
+          <div class="progress-bar {% if total_activos >= minimo %}bg-success{% else %}bg-danger{% endif %}"
+               role="progressbar"
+               style="width: {% widthratio total_activos minimo 100 %}%;
+                      max-width:100%;"></div>
+        </div>
+      </div>
+      {% if faltan > 0 %}
+      <div>
+        <span class="badge bg-danger fs-6">Faltan {{ faltan }} para cubrir {{ minimo }} días</span>
+      </div>
+      {% else %}
+      <div>
+        <span class="badge bg-success fs-6">✓ Cobertura de {{ minimo }} días garantizada</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Carga masiva desde TXT ────────────────────────────────────────────── -->
+<div class="card shadow-sm mb-4 border-start border-danger border-3">
+  <div class="card-header fw-semibold">Carga masiva desde archivo .txt</div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">
+      Sube un archivo <strong>.txt</strong> con los datos separados por <code>&gt;</code>.
+      Cada fragmento se tratará como un dato independiente. Los duplicados y los que
+      superen {{ max_palabras }} palabras serán omitidos automáticamente.
+    </p>
+    <form method="post" action="{% url 'cuentas:cargar_datos_desde_txt' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+          <label for="archivo_txt" class="form-label">Archivo <span class="text-danger">*</span></label>
+          <input type="file" id="archivo_txt" name="archivo_txt"
+                 class="form-control" accept=".txt" required>
+        </div>
+        <div class="col-md-5">
+          <label for="fuente_txt" class="form-label">Fuente <span class="text-danger">*</span></label>
+          <input type="text" id="fuente_txt" name="fuente_txt" maxlength="200"
+                 class="form-control" placeholder="Ej: OMS, 2023 / APA Guidelines" required>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-danger w-100">Cargar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Crear nuevo dato ──────────────────────────────────────────────────── -->
+<div class="card shadow-sm mb-5">
+  <div class="card-header fw-semibold">Agregar dato</div>
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="texto" class="form-label">
+          Texto <span class="text-danger">*</span>
+          <span class="text-muted small">(máximo {{ max_palabras }} palabras)</span>
+        </label>
+        <textarea id="texto" name="texto" rows="4"
+                  class="form-control {% if errores.texto %}is-invalid{% endif %}"
+                  placeholder="Escribe el dato educativo aquí..."
+                  required>{{ form_data.texto|default:'' }}</textarea>
+        {% if errores.texto %}
+          <div class="invalid-feedback">{{ errores.texto }}</div>
+        {% endif %}
+        <div class="form-text" id="contador-palabras">0 / {{ max_palabras }} palabras</div>
+      </div>
+      <div class="mb-3">
+        <label for="fuente" class="form-label">
+          Fuente <span class="text-danger">*</span>
+        </label>
+        <input type="text" id="fuente" name="fuente" maxlength="200"
+               class="form-control {% if errores.fuente %}is-invalid{% endif %}"
+               placeholder="Ej: OMS, 2023 / APA Guidelines / Mayo Clinic"
+               value="{{ form_data.fuente|default:'' }}" required>
+        {% if errores.fuente %}
+          <div class="invalid-feedback">{{ errores.fuente }}</div>
+        {% endif %}
+      </div>
+      <button type="submit" class="btn btn-danger">Crear dato</button>
+    </form>
+  </div>
+</div>
+
+<!-- ── Listado de datos ──────────────────────────────────────────────────── -->
+<h5 class="section-title mb-3">
+  Datos registrados
+  <span class="text-muted small fw-normal">({{ datos|length }} total)</span>
+</h5>
+
+{% if datos %}
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+    <table class="table table-sm mb-0 align-middle">
+      <thead>
+        <tr>
+          <th class="ps-3" style="width:50px;">#</th>
+          <th>Texto</th>
+          <th style="width:180px;">Fuente</th>
+          <th class="text-center" style="width:90px;">Estado</th>
+          <th class="text-center" style="width:160px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in datos %}
+        <tr>
+          <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+          <td>
+            <span class="small">{{ d.texto|truncatechars:120 }}</span>
+          </td>
+          <td class="small text-muted">{{ d.fuente }}</td>
+          <td class="text-center">
+            {% if d.activo %}
+              <span class="badge bg-success">Activo</span>
+            {% else %}
+              <span class="badge bg-secondary">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <a href="{% url 'cuentas:editar_dato_dia' d.pk %}"
+               class="btn btn-sm btn-outline-danger">Editar</a>
+            <form method="post" action="{% url 'cuentas:toggle_dato_dia' d.pk %}" class="d-inline">
+              {% csrf_token %}
+              {% if d.activo %}
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Desactivar</button>
+              {% else %}
+                <button type="submit" class="btn btn-sm btn-outline-success">Activar</button>
+              {% endif %}
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+  No hay datos registrados. Crea el primero usando el formulario de arriba.
+</div>
+{% endif %}
+
+<!-- Contador de palabras en tiempo real -->
+<script>
+(function () {
+  const textarea = document.getElementById('texto');
+  const contador = document.getElementById('contador-palabras');
+  const max      = {{ max_palabras }};
+
+  function actualizar() {
+    const palabras = textarea.value.trim() ? textarea.value.trim().split(/\s+/).length : 0;
+    contador.textContent = palabras + ' / ' + max + ' palabras';
+    contador.style.color = palabras > max ? '#721c24' : '#6c757d';
+  }
+
+  textarea.addEventListener('input', actualizar);
+  actualizar();
+})();
+</script>
+
+{% endblock %}

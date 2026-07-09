@@ -17,28 +17,17 @@ class CuestionarioAdmin(admin.ModelAdmin):
     search_fields = ['nombre', 'especialista__username']
     readonly_fields = ['especialista', 'nombre', 'descripcion', 'fecha_creacion']
     inlines = [PreguntaInline]
-    actions = ['aprobar_cuestionarios', 'rechazar_cuestionarios']
+    actions = ['aprobar_cuestionarios']
 
     @admin.action(description='Aprobar cuestionarios seleccionados')
     def aprobar_cuestionarios(self, request, queryset):
-        actualizados = queryset.filter(estado=Cuestionario.EN_REVISION).update(
+        actualizados = queryset.filter(estado=Cuestionario.BORRADOR).update(
             estado=Cuestionario.APROBADO
         )
         self.message_user(
             request,
             f'{actualizados} cuestionario(s) aprobado(s). Ya visibles para todos los especialistas.',
             messages.SUCCESS
-        )
-
-    @admin.action(description='Rechazar cuestionarios seleccionados')
-    def rechazar_cuestionarios(self, request, queryset):
-        actualizados = queryset.filter(estado=Cuestionario.EN_REVISION).update(
-            estado=Cuestionario.RECHAZADO
-        )
-        self.message_user(
-            request,
-            f'{actualizados} cuestionario(s) rechazado(s). El especialista puede corregirlos.',
-            messages.WARNING
         )
 
 

@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% block titulo %}Respiración Guiada — PsicoApp{% endblock %}
+
+{% block contenido %}
+<style>
+  /* Animación: sin overflow:hidden para que el círculo se expanda libremente */
+  .zona-respiracion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 0;
+  }
+  .circulo-base {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background-color: rgba(192, 57, 43, 0.1);
+    border: 4px solid #C0392B;
+    flex-shrink: 0;
+    transition: transform 0.1s linear, background-color 0.4s ease, border-color 0.4s ease;
+  }
+  /* Selector de técnica */
+  .tecnica-btn {
+    border: 2px solid #C0392B;
+    color: #C0392B;
+    background: white;
+    border-radius: 8px;
+    padding: 0.45rem 1.1rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background 0.2s, color 0.2s;
+  }
+  .tecnica-btn.activa {
+    background-color: #C0392B;
+    color: white;
+  }
+  .tecnica-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  #texto-instruccion {
+    min-height: 2.4rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  #timer-fase {
+    min-height: 1.4rem;
+  }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-danger">Respiración Guiada</h2>
+    <p class="text-muted mb-0">Elige una técnica y sigue el ritmo del círculo.</p>
+  </div>
+  <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-outline-secondary btn-sm">← Volver</a>
+</div>
+
+<!-- ── Selector de técnica ── -->
+<div class="row justify-content-center mb-3">
+  <div class="col-md-10 col-lg-8">
+    <div class="d-flex gap-2 flex-wrap justify-content-center mb-3" id="selector-tecnica">
+      <button class="tecnica-btn activa" onclick="seleccionarTecnica('478', this)">4-7-8</button>
+      <button class="tecnica-btn"        onclick="seleccionarTecnica('caja', this)">Cuadrada</button>
+      <button class="tecnica-btn"        onclick="seleccionarTecnica('diafragmatica', this)">Diafragmática</button>
+    </div>
+
+    <!-- Descripción de la técnica activa -->
+    <div id="desc-478" class="alert alert-light border small mb-0">
+      <strong>Técnica 4-7-8</strong> (Dr. Andrew Weil) — Inhala 4 s → mantén 7 s → exhala 8 s.
+      Activa el nervio vago y el sistema parasimpático, reduciendo el cortisol. Es especialmente
+      efectiva antes de dormir o ante picos de ansiedad. Se realizan 4 ciclos completos.
+    </div>
+    <div id="desc-caja" class="alert alert-light border small mb-0 d-none">
+      <strong>Respiración cuadrada (Box breathing)</strong> — Inhala 4 s → mantén 4 s →
+      exhala 4 s → retén vacío 4 s. Empleada por equipos militares y deportistas de élite para
+      recuperar la calma y mejorar el enfoque bajo presión. Cuatro fases iguales forman
+      un "cuadrado" respiratorio. Se realizan 4 ciclos.
+    </div>
+    <div id="desc-diafragmatica" class="alert alert-light border small mb-0 d-none">
+      <strong>Respiración diafragmática</strong> — Inhala profundamente por la nariz 5 s
+      (siente cómo se eleva el abdomen, no el pecho) → exhala lento por la boca 5 s.
+      Oxigena mejor los pulmones, baja la frecuencia cardíaca y reduce la tensión
+      muscular de forma sostenida. Se realizan 6 ciclos.
+    </div>
+  </div>
+</div>
+
+<!-- ── Panel de ejercicio ── -->
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-sm border-0" style="border-top: 4px solid #C0392B !important;">
+      <div class="card-body p-4 text-center">
+
+        <h6 id="contador-ciclos" class="text-muted mb-3">Ciclo 1 de 4</h6>
+
+        <!-- Círculo sin texto dentro → no se corta nada -->
+        <div class="zona-respiracion mb-1">
+          <div id="circulo-respiracion" class="circulo-base"></div>
+        </div>
+
+        <!-- Instrucción y temporizador fuera del círculo, ancho completo -->
+        <p id="texto-instruccion" class="fs-5 fw-bold text-danger mb-1">Presiona Iniciar</p>
+        <p id="timer-fase" class="text-muted small mb-4"></p>
+
+        <div class="d-flex justify-content-center gap-2 mb-3 flex-wrap">
+          <button id="btn-iniciar" class="btn btn-danger px-4" onclick="iniciar()">Iniciar</button>
+          <button id="btn-pausar"  class="btn btn-outline-secondary px-4" onclick="pausar()"  disabled>Pausar</button>
+          <button id="btn-detener" class="btn btn-outline-secondary px-4" onclick="detener()" disabled>Detener</button>
+        </div>
+
+        <div id="zona-finalizar" class="mt-4 d-none p-3 bg-light rounded border">
+          <p class="fw-semibold mb-2">¡Lo lograste! ¿Cómo te sientes ahora?</p>
+          <a href="{% url 'cuentas:registrar_animo' %}" class="btn btn-danger btn-sm">
+            Registrar mi estado de ánimo
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Configuración de técnicas ──────────────────────────────────────────────
+// Cada fase: {nombre, ticks (×100 ms), escalaInicio, escalaFin}
+const TECNICAS = {
+  '478': {
+    totalCiclos: 4,
+    fases: [
+      { nombre: 'Inhala...',  ticks: 40, escalaIni: 1.0, escalaFin: 1.8 },
+      { nombre: 'Mantén...',  ticks: 70, escalaIni: 1.8, escalaFin: 1.8 },
+      { nombre: 'Exhala...',  ticks: 80, escalaIni: 1.8, escalaFin: 1.0 },
+    ]
+  },
+  'caja': {
+    totalCiclos: 4,
+    fases: [
+      { nombre: 'Inhala...',  ticks: 40, escalaIni: 1.0, escalaFin: 1.8 },
+      { nombre: 'Mantén...',  ticks: 40, escalaIni: 1.8, escalaFin: 1.8 },
+      { nombre: 'Exhala...',  ticks: 40, escalaIni: 1.8, escalaFin: 1.0 },
+      { nombre: 'Retén...',   ticks: 40, escalaIni: 1.0, escalaFin: 1.0 },
+    ]
+  },
+  'diafragmatica': {
+    totalCiclos: 6,
+    fases: [
+      { nombre: 'Inhala profundo...', ticks: 50, escalaIni: 1.0, escalaFin: 1.8 },
+      { nombre: 'Exhala lento...',    ticks: 50, escalaIni: 1.8, escalaFin: 1.0 },
+    ]
+  }
+};
+
+let tecnicaId      = '478';
+let tecnicaActual  = TECNICAS['478'];
+let intervalo      = null;
+let tickEnCiclo    = 0;
+let cicloActual    = 1;
+
+const circulo    = document.getElementById('circulo-respiracion');
+const texto      = document.getElementById('texto-instruccion');
+const contador   = document.getElementById('contador-ciclos');
+const timerFase  = document.getElementById('timer-fase');
+const btnIniciar = document.getElementById('btn-iniciar');
+const btnPausar  = document.getElementById('btn-pausar');
+const btnDetener = document.getElementById('btn-detener');
+const zonaFinal  = document.getElementById('zona-finalizar');
+
+function totalTicksCiclo(t) {
+  return t.fases.reduce((s, f) => s + f.ticks, 0);
+}
+
+function seleccionarTecnica(id, btn) {
+  if (intervalo) detener();
+  tecnicaId     = id;
+  tecnicaActual = TECNICAS[id];
+  cicloActual   = 1;
+  tickEnCiclo   = 0;
+  contador.innerText  = 'Ciclo 1 de ' + tecnicaActual.totalCiclos;
+  texto.innerText     = 'Presiona Iniciar';
+  timerFase.innerText = '';
+  circulo.style.transform       = 'scale(1)';
+  circulo.style.backgroundColor = 'rgba(192,57,43,0.1)';
+  circulo.style.borderColor     = '#C0392B';
+
+  document.querySelectorAll('.tecnica-btn').forEach(b => b.classList.remove('activa'));
+  btn.classList.add('activa');
+
+  ['478', 'caja', 'diafragmatica'].forEach(k => {
+    const el = document.getElementById('desc-' + k);
+    if (el) el.classList.toggle('d-none', k !== id);
+  });
+}
+
+function actualizarAnimacion() {
+  const durCiclo  = totalTicksCiclo(tecnicaActual);
+  const tickGlobal = (cicloActual - 1) * durCiclo + tickEnCiclo;
+
+  if (tickGlobal >= tecnicaActual.totalCiclos * durCiclo) {
+    finalizarEjercicio();
+    return;
+  }
+
+  // Determinar fase actual por acumulación de ticks
+  let acum = 0;
+  let fase = null, tickEnFase = 0;
+  for (let f of tecnicaActual.fases) {
+    if (tickEnCiclo < acum + f.ticks) {
+      fase       = f;
+      tickEnFase = tickEnCiclo - acum;
+      break;
+    }
+    acum += f.ticks;
+  }
+  if (!fase) { fase = tecnicaActual.fases[0]; tickEnFase = 0; }
+
+  // Interpolación lineal de escala dentro de la fase
+  const progreso = tickEnFase / fase.ticks;
+  const escala   = fase.escalaIni + (fase.escalaFin - fase.escalaIni) * progreso;
+
+  texto.innerText             = fase.nombre;
+  circulo.style.transform     = 'scale(' + escala.toFixed(3) + ')';
+  circulo.style.backgroundColor = escala > 1.4
+    ? 'rgba(192,57,43,0.25)'
+    : 'rgba(192,57,43,0.1)';
+
+  const segsRestantes = Math.ceil((fase.ticks - tickEnFase) / 10);
+  timerFase.innerText = segsRestantes + ' s';
+
+  tickEnCiclo++;
+  if (tickEnCiclo >= durCiclo) {
+    tickEnCiclo = 0;
+    cicloActual++;
+    if (cicloActual <= tecnicaActual.totalCiclos) {
+      contador.innerText = 'Ciclo ' + cicloActual + ' de ' + tecnicaActual.totalCiclos;
+    }
+  }
+}
+
+function iniciar() {
+  if (!intervalo) {
+    zonaFinal.classList.add('d-none');
+    circulo.style.borderColor     = '#C0392B';
+    circulo.style.backgroundColor = 'rgba(192,57,43,0.1)';
+    intervalo       = setInterval(actualizarAnimacion, 100);
+    btnIniciar.disabled = true;
+    btnPausar.disabled  = false;
+    btnDetener.disabled = false;
+    document.querySelectorAll('.tecnica-btn').forEach(b => b.disabled = true);
+  }
+}
+
+function pausar() {
+  clearInterval(intervalo);
+  intervalo           = null;
+  btnIniciar.disabled = false;
+  btnIniciar.innerText = 'Reanudar';
+  btnPausar.disabled  = true;
+}
+
+function detener() {
+  clearInterval(intervalo);
+  intervalo       = null;
+  tickEnCiclo     = 0;
+  cicloActual     = 1;
+  circulo.style.transform       = 'scale(1)';
+  circulo.style.backgroundColor = 'rgba(192,57,43,0.1)';
+  circulo.style.borderColor     = '#C0392B';
+  texto.innerText      = 'Presiona Iniciar';
+  timerFase.innerText  = '';
+  contador.innerText   = 'Ciclo 1 de ' + tecnicaActual.totalCiclos;
+  btnIniciar.disabled  = false;
+  btnIniciar.innerText = 'Iniciar';
+  btnPausar.disabled   = true;
+  btnDetener.disabled  = true;
+  document.querySelectorAll('.tecnica-btn').forEach(b => b.disabled = false);
+}
+
+function finalizarEjercicio() {
+  detener();
+  texto.innerText               = '¡Completado!';
+  circulo.style.backgroundColor = 'rgba(25,135,84,0.1)';
+  circulo.style.borderColor     = '#198754';
+  zonaFinal.classList.remove('d-none');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,35 @@
+# Vista del administrador para revisar un cuestionario enviado a revisión
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+
+from ..models import Cuestionario
+
+
+@login_required
+def revisar_cuestionario(request, pk):
+    if not (request.user.es_admin() or request.user.is_superuser):
+        return redirect('cuentas:login')
+
+    cuestionario = get_object_or_404(Cuestionario, pk=pk)
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion')
+
+        if accion == 'aprobar':
+            es_publico = request.POST.get('es_publico') == '1'
+            cuestionario.estado = Cuestionario.APROBADO
+            cuestionario.es_publico = es_publico
+            cuestionario.save()
+            visibilidad = 'público para todos los especialistas' if es_publico else 'privado (solo del especialista)'
+            messages.success(
+                request,
+                f'"{cuestionario.nombre}" fue aprobado y quedó {visibilidad}.'
+            )
+            return redirect('cuentas:dashboard_admin')
+
+    preguntas = cuestionario.preguntas.filter(activa=True).order_by('orden', 'id')
+    return render(request, 'cuestionarios/revisar_cuestionario.html', {
+        'cuestionario': cuestionario,
+        'preguntas': preguntas,
+    })

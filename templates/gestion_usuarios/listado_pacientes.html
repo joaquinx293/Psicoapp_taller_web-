@@ -1,15 +1,66 @@
 {% extends "base.html" %}
 {% block titulo %}Mis pacientes{% endblock %}
 {% block contenido %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h2>Mis pacientes</h2>
-  <a href="{% url 'gestion_usuarios:invitar_paciente' %}" class="btn btn-danger">+ Invitar paciente</a>
+
+<style>
+  .az-bar { display: flex; flex-wrap: wrap; gap: 4px; }
+  .az-btn {
+    padding: 2px 9px; font-size: .78rem; font-weight: 600;
+    border: 1px solid #dee2e6; background: white; border-radius: 4px; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .az-btn:hover:not([disabled]), .az-btn.activo {
+    background: #C0392B; color: white; border-color: #C0392B;
+  }
+  .az-btn[disabled] { opacity: .28; cursor: default; }
+  .tabs-indice { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tab-btn {
+    padding: 4px 14px; border: 2px solid #dee2e6; background: white;
+    border-radius: 20px; font-size: .85rem; font-weight: 600; cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .tab-btn:hover, .tab-btn.activo { background: #C0392B; color: white; border-color: #C0392B; }
+  .tab-count { font-size: .72rem; margin-left: 3px; opacity: .8; }
+</style>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <h2 class="mb-0">Mis pacientes</h2>
+  <a href="{% url 'gestion_usuarios:invitar_paciente' %}" class="btn btn-danger btn-sm">+ Invitar paciente</a>
 </div>
 
-{% if invitaciones %}
+<!-- Búsqueda -->
+<form method="get" class="mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-5">
+      <input type="text" name="q" value="{{ q }}"
+             class="form-control form-control-sm"
+             placeholder="Buscar por nombre o correo...">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-sm btn-danger">Buscar</button>
+      {% if q %}
+        <a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="btn btn-sm btn-outline-secondary ms-1">Limpiar</a>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+{% if page_obj.object_list %}
+
+<!-- ── Tabs de estado ─────────────────────────────────────────── -->
+<div class="tabs-indice mb-3" id="tabs-pac">
+  <button class="tab-btn activo" data-tab="todos">Todos</button>
+  <button class="tab-btn" data-tab="aceptada">Activo</button>
+  <button class="tab-btn" data-tab="pendiente">Pendiente</button>
+  <button class="tab-btn" data-tab="expirada">Expirada</button>
+</div>
+
+<!-- ── Índice A-Z ─────────────────────────────────────────────── -->
+<div class="az-bar mb-3" id="az-pac"></div>
+
 <div class="card shadow-sm">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
+    <table class="table table-hover mb-0" id="tabla-pac">
       <thead class="table-light">
         <tr>
           <th>Nombre</th>
@@ -20,8 +71,10 @@
         </tr>
       </thead>
       <tbody>
-        {% for inv in invitaciones %}
-        <tr>
+        {% for inv in page_obj %}
+        <tr class="item-paciente"
+            data-nombre="{{ inv.nombre_paciente }}"
+            data-estado="{{ inv.estado }}">
           <td>{{ inv.nombre_paciente }}</td>
           <td>{{ inv.correo_paciente }}</td>
           <td>
@@ -38,19 +91,23 @@
             {% if inv.estado == 'aceptada' and inv.paciente %}
               <div class="d-flex gap-1 flex-wrap">
                 <a href="{% url 'cuestionarios:asignar_cuestionario' inv.paciente.pk %}"
-                   class="btn btn-sm btn-outline-danger">
-                  Asignar
-                </a>
+                   class="btn btn-sm btn-outline-danger">Asignar</a>
                 <a href="{% url 'cuestionarios:ver_respuestas_paciente' inv.paciente.pk %}"
-                   class="btn btn-sm btn-outline-secondary">
-                  Ver respuestas
-                </a>
+                   class="btn btn-sm btn-outline-danger">Ver respuestas</a>
+                <a href="{% url 'cuentas:calendario_animo_paciente' inv.paciente.pk %}"
+                   class="btn btn-sm btn-outline-danger">Calendario</a>
+                <a href="{% url 'gestion_usuarios:pregunta_diaria' inv.paciente.pk %}"
+                   class="btn btn-sm btn-outline-danger">Pregunta diaria</a>
+                <a href="{% url 'cuestionarios:ver_promedio_animo' inv.paciente.pk %}"
+                   class="btn btn-sm btn-outline-info">Promedio ánimo</a>
+                <a href="{% url 'cuentas:configurar_visibilidad_paciente' inv.paciente.pk %}"
+                   class="btn btn-sm btn-outline-secondary">Permisos</a>
               </div>
             {% elif inv.estado == 'pendiente' %}
               <a href="{% url 'cuestionarios:asignar_pendiente' inv.pk %}"
-                 class="btn btn-sm btn-outline-warning">
-                Precargar tests
-              </a>
+                 class="btn btn-sm btn-outline-danger">Precargar tests</a>
+               <a href="{% url 'cuestionarios:ver_adherencia_paciente' inv.paciente.pk %}"
+   class="btn btn-sm btn-outline-primary">Adherencia</a>
             {% else %}
               <span class="text-muted small">—</span>
             {% endif %}
@@ -61,10 +118,119 @@
     </table>
   </div>
 </div>
-{% else %}
-<div class="alert alert-info">
-  Aún no has invitado a ningún paciente.
-  <a href="{% url 'gestion_usuarios:invitar_paciente' %}">Invita al primero</a>.
+
+<div id="sin-resultados-pac" class="alert alert-light border mt-3" style="display:none;">
+  No hay pacientes que coincidan con los filtros seleccionados en esta página.
 </div>
+
+<!-- Paginación -->
+{% if page_obj.has_other_pages %}
+<nav class="mt-3" aria-label="Pacientes">
+  <ul class="pagination pagination-sm justify-content-center">
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?q={{ q }}&page={{ page_obj.previous_page_number }}">&laquo;</a>
+      </li>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <li class="page-item">
+          <a class="page-link" href="?q={{ q }}&page={{ num }}">{{ num }}</a>
+        </li>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?q={{ q }}&page={{ page_obj.next_page_number }}">&raquo;</a>
+      </li>
+    {% endif %}
+  </ul>
+  <p class="text-muted small text-center">
+    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    — {{ page_obj.paginator.count }} paciente{{ page_obj.paginator.count|pluralize }} en total
+  </p>
+</nav>
 {% endif %}
+
+{% else %}
+  {% if q %}
+    <div class="alert alert-light border">No se encontraron pacientes con "{{ q }}".</div>
+  {% else %}
+    <div class="alert alert-info">
+      Aún no has invitado ningún paciente.
+      <a href="{% url 'gestion_usuarios:invitar_paciente' %}">Invita al primero</a>.
+    </div>
+  {% endif %}
+{% endif %}
+
+<script>
+(function () {
+  const tabla  = document.getElementById('tabla-pac');
+  const azBar  = document.getElementById('az-pac');
+  const sinRes = document.getElementById('sin-resultados-pac');
+  if (!tabla || !azBar) return;
+
+  let filtroTab   = 'todos';
+  let filtroLetra = 'todos';
+  const items = Array.from(tabla.querySelectorAll('tbody .item-paciente'));
+
+  // ── Contar y actualizar tabs ───────────────────────────────────
+  const counts = { aceptada: 0, pendiente: 0, expirada: 0 };
+  items.forEach(el => {
+    const e = el.getAttribute('data-estado');
+    if (e in counts) counts[e]++;
+  });
+  document.querySelectorAll('#tabs-pac .tab-btn').forEach(btn => {
+    const tab = btn.getAttribute('data-tab');
+    const n   = tab === 'todos' ? items.length : (counts[tab] || 0);
+    btn.insertAdjacentHTML('beforeend', ` <span class="tab-count">(${n})</span>`);
+  });
+
+  // ── Construir índice A-Z ───────────────────────────────────────
+  const existentes = new Set(
+    items.map(el => (el.getAttribute('data-nombre') || '').trim().charAt(0).toUpperCase())
+         .filter(c => /[A-ZÁÉÍÓÚÑ]/.test(c))
+  );
+  const LETRAS = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('');
+  azBar.innerHTML =
+    '<button class="az-btn activo" data-letra="todos">Todos</button> ' +
+    LETRAS.map(l =>
+      `<button class="az-btn" data-letra="${l}"${existentes.has(l) ? '' : ' disabled'}>${l}</button>`
+    ).join(' ');
+
+  // ── Filtrar ────────────────────────────────────────────────────
+  function filtrar() {
+    let vis = 0;
+    items.forEach(el => {
+      const nombre = (el.getAttribute('data-nombre') || '').trim().toUpperCase();
+      const estado = el.getAttribute('data-estado') || '';
+      const ok = (filtroLetra === 'todos' || nombre.charAt(0) === filtroLetra) &&
+                 (filtroTab   === 'todos' || estado === filtroTab);
+      el.style.display = ok ? '' : 'none';
+      if (ok) vis++;
+    });
+    sinRes.style.display = vis === 0 ? '' : 'none';
+  }
+
+  azBar.addEventListener('click', function (e) {
+    const btn = e.target.closest('.az-btn');
+    if (!btn || btn.disabled) return;
+    filtroLetra = btn.getAttribute('data-letra');
+    azBar.querySelectorAll('.az-btn').forEach(b => b.classList.toggle('activo', b === btn));
+    filtrar();
+  });
+
+  document.querySelectorAll('#tabs-pac .tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      filtroTab = this.getAttribute('data-tab');
+      document.querySelectorAll('#tabs-pac .tab-btn')
+               .forEach(b => b.classList.toggle('activo', b === this));
+      filtrar();
+    });
+  });
+})();
+</script>
+
 {% endblock %}

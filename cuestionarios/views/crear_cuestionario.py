@@ -1,5 +1,5 @@
 # HU-011: Crear cuestionario personalizado
-# HU-016: Listado incluye cuestionarios aprobados de todos los especialistas
+# HU-016/HU-017: Los cuestionarios publicos estan en la vista cuestionarios_publicos
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -14,13 +14,9 @@ def listado_cuestionarios(request):
         return redirect('cuentas:login')
 
     mis_cuestionarios = Cuestionario.objects.filter(especialista=request.user)
-    cuestionarios_aprobados = Cuestionario.objects.filter(
-        estado=Cuestionario.APROBADO
-    ).exclude(especialista=request.user)
 
     return render(request, 'cuestionarios/listado.html', {
         'mis_cuestionarios': mis_cuestionarios,
-        'cuestionarios_aprobados': cuestionarios_aprobados,
     })
 
 

@@ -4,49 +4,557 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block titulo %}PsicoApp{% endblock %}</title>
+
+  <!-- Fuente Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
-    .navbar-psicoapp { background-color: #C0392B; }
-    body { background-color: #f8f9fa; }
+    /* ══ Variables ════════════════════════════════════════════════ */
+    :root {
+      --red:         #C0392B;
+      --red-dark:    #a93226;
+      --red-light:   #fef2f1;
+      --sidebar-w:   240px;
+      --body-bg:     #F4F6F9;
+      --card-radius: 12px;
+      --text-main:   #1e2533;
+      --text-muted:  #8492a6;
+      --border:      #e8ecf0;
+      --shadow-sm:   0 1px 4px rgba(0,0,0,.06);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.09);
+    }
+
+    /* ══ Reset / Base ═════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--body-bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      margin: 0;
+      font-size: .9rem;
+      line-height: 1.6;
+    }
+
+    /* ══ Sidebar ══════════════════════════════════════════════════ */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: var(--sidebar-w);
+      background: #fff;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 1040;
+      transition: transform .24s cubic-bezier(.4,0,.2,1);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 16px 16px;
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .sidebar-brand-icon {
+      width: 34px; height: 34px;
+      background: var(--red);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: .95rem; font-weight: 800;
+      flex-shrink: 0;
+    }
+    .sidebar-brand-text {
+      font-size: 1rem; font-weight: 700;
+      color: var(--text-main); letter-spacing: -.4px;
+    }
+
+    .sidebar-section { padding: 12px 8px 4px; }
+
+    .sidebar-nav-item { list-style: none; margin: 1px 0; }
+    .sidebar-nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      color: #55667a;
+      text-decoration: none;
+      font-size: .84rem;
+      font-weight: 500;
+      transition: background .14s, color .14s;
+      position: relative;
+      white-space: nowrap;
+    }
+    .sidebar-nav-link:hover { background: var(--body-bg); color: var(--text-main); }
+    .sidebar-nav-link.active {
+      background: var(--red-light);
+      color: var(--red);
+      font-weight: 600;
+    }
+    .sidebar-nav-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 5px; bottom: 5px;
+      width: 3px; background: var(--red); border-radius: 0 3px 3px 0;
+    }
+    .sidebar-nav-link i { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 10px 8px 12px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .sidebar-user-info { padding: 4px 10px 8px; }
+    .sidebar-user-name { font-size: .82rem; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-user-role { font-size: .73rem; color: var(--text-muted); }
+    .sidebar-logout-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 8px;
+      color: var(--text-muted); font-size: .84rem; font-weight: 500;
+      cursor: pointer; background: none; border: none;
+      width: 100%; text-align: left;
+      transition: background .14s, color .14s;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .sidebar-logout-btn:hover { background: var(--red-light); color: var(--red); }
+
+    /* ══ Backdrop móvil ═══════════════════════════════════════════ */
+    .sidebar-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(15,20,30,.45); z-index: 1039;
+      backdrop-filter: blur(2px);
+    }
+    .sidebar-backdrop.show { display: block; }
+
+    /* ══ Main wrapper ══════════════════════════════════════════════ */
+    .main-wrapper {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Mobile topbar */
+    .mobile-topbar {
+      display: none;
+      position: sticky; top: 0; z-index: 999;
+      background: #fff; border-bottom: 1px solid var(--border);
+      padding: 11px 16px;
+      align-items: center; gap: 12px;
+    }
+    .mobile-topbar-brand { flex: 1; font-weight: 700; font-size: .95rem; color: var(--text-main); letter-spacing: -.3px; }
+    .hamburger-btn {
+      background: none; border: 1px solid var(--border);
+      padding: 5px 8px; border-radius: 7px; font-size: 1.1rem;
+      cursor: pointer; color: var(--text-main); line-height: 1;
+    }
+
+    .main-messages { padding: 20px 28px 0; }
+    .main-content  { padding: 24px 28px; flex: 1; }
+
+    /* ══ Cards ════════════════════════════════════════════════════ */
+    .card {
+      border: 1px solid var(--border) !important;
+      border-radius: var(--card-radius) !important;
+      box-shadow: var(--shadow-sm) !important;
+      background: #fff !important;
+    }
+    .card-header {
+      background: transparent !important;
+      border-bottom: 1px solid var(--border) !important;
+      padding: 14px 18px !important;
+      font-weight: 600 !important;
+      font-size: .88rem !important;
+    }
+    .card-body { padding: 18px !important; }
+
+    /* ══ Botones ══════════════════════════════════════════════════ */
+    .btn {
+      font-family: 'Inter', system-ui, sans-serif !important;
+      font-weight: 500 !important;
+      border-radius: 8px !important;
+      font-size: .84rem !important;
+    }
+    .btn-danger        { background: var(--red) !important; border-color: var(--red) !important; }
+    .btn-danger:hover  { background: var(--red-dark) !important; border-color: var(--red-dark) !important; }
+    .btn-outline-danger { color: var(--red) !important; border-color: var(--red) !important; }
+    .btn-outline-danger:hover { background: var(--red) !important; color: #fff !important; }
+    .btn-outline-secondary { border-color: var(--border) !important; color: #55667a !important; }
+    .btn-outline-secondary:hover { background: var(--body-bg) !important; color: var(--text-main) !important; }
+
+    /* ══ Formularios ══════════════════════════════════════════════ */
+    .form-control, .form-select {
+      border-radius: 8px !important;
+      border-color: var(--border) !important;
+      font-family: 'Inter', system-ui, sans-serif !important;
+      font-size: .875rem !important;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--red) !important;
+      box-shadow: 0 0 0 3px rgba(192,57,43,.12) !important;
+    }
+    .form-label { font-weight: 500; font-size: .84rem; }
+    .form-text  { font-size: .76rem; color: var(--text-muted); }
+
+    /* ══ Alerts ═══════════════════════════════════════════════════ */
+    .alert { border-radius: 10px !important; font-size: .875rem; }
+    .alert-success { background: #f0fdf4 !important; color: #166534 !important; border-color: #bbf7d0 !important; }
+    .alert-danger  { background: #fef2f1 !important; color: #991b1b !important; border-color: #fecaca !important; }
+    .alert-warning { background: #fffbeb !important; color: #92400e !important; border-color: #fde68a !important; }
+    .alert-info    { background: #eff6ff !important; color: #1e40af !important; border-color: #bfdbfe !important; }
+
+    /* ══ Badges ═══════════════════════════════════════════════════ */
+    .badge { font-weight: 500 !important; font-size: .7rem !important; border-radius: 6px !important; }
+
+    /* ══ Tablas ═══════════════════════════════════════════════════ */
+    .table { font-size: .855rem; }
+    .table thead th {
+      font-weight: 600; font-size: .74rem;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px;
+      border-bottom-width: 1px; padding: .6rem .75rem;
+    }
+    .table td { padding: .6rem .75rem; vertical-align: middle; }
+
+    /* ══ Tipografía ═══════════════════════════════════════════════ */
+    h1,h2,h3,h4,h5,h6 {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 700; letter-spacing: -.35px; color: var(--text-main);
+    }
+    h2 { font-size: 1.45rem; }
+    h3 { font-size: 1.2rem; }
+    h5 { font-size: .98rem; }
+    a  { color: var(--red); }
+    a:hover { color: var(--red-dark); }
+    .text-muted { color: var(--text-muted) !important; }
+    .list-group-item { border-color: var(--border) !important; font-size: .875rem; }
+
+    /* ══ Índice A-Z y Tabs (compartido) ══════════════════════════ */
+    .az-bar { display: flex; flex-wrap: wrap; gap: 4px; }
+    .az-btn {
+      padding: 3px 9px; font-size: .74rem; font-weight: 600;
+      border: 1px solid var(--border); background: #fff; border-radius: 6px; cursor: pointer;
+      transition: background .13s, color .13s;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .az-btn:hover:not([disabled]), .az-btn.activo { background: var(--red); color: #fff; border-color: var(--red); }
+    .az-btn[disabled] { opacity: .28; cursor: default; }
+    .tabs-indice { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tab-btn {
+      padding: 5px 16px; border: 1.5px solid var(--border); background: #fff;
+      border-radius: 20px; font-size: .81rem; font-weight: 600; cursor: pointer;
+      transition: background .13s, color .13s, border-color .13s;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .tab-btn:hover, .tab-btn.activo { background: var(--red); color: #fff; border-color: var(--red); }
+    .tab-count { font-size: .68rem; margin-left: 3px; opacity: .8; }
+
+    /* ══ Reproductor de música ════════════════════════════════════ */
+    #psico-player {
+      position: fixed;
+      bottom: 0; left: var(--sidebar-w); right: 0;
+      background: #fff; color: var(--text-main);
+      padding: 8px 20px; z-index: 1050;
+      display: none; align-items: center; gap: 12px;
+      border-top: 3px solid var(--red);
+      box-shadow: 0 -3px 0 0 var(--red), 0 -4px 16px rgba(0,0,0,.08);
+    }
+    #psico-player.visible { display: flex; }
+    body.has-player { padding-bottom: 62px; }
+    #player-title {
+      flex: 1; font-size: .81rem; font-weight: 600; color: var(--text-main);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+    }
+    .player-btn {
+      background: none; border: none; color: var(--red);
+      font-size: 1.1rem; cursor: pointer; padding: 4px 7px; border-radius: 6px;
+      transition: background .13s, color .13s;
+    }
+    .player-btn:hover { background: var(--red); color: #fff; }
+    #player-volume { width: 80px; accent-color: var(--red); }
+
+    /* ══ Responsive ═══════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); box-shadow: var(--shadow-md); }
+      .main-wrapper { margin-left: 0; }
+      .mobile-topbar { display: flex; }
+      .main-content { padding: 16px; }
+      .main-messages { padding: 12px 16px 0; }
+      #psico-player { left: 0; }
+    }
+
+    @media (max-width: 576px) {
+      h2 { font-size: 1.25rem; }
+      h3 { font-size: 1.05rem; }
+      .btn { min-height: 38px; }
+      .btn-sm { min-height: 32px !important; font-size: .78rem !important; }
+      .table { font-size: .78rem; }
+      .table td, .table th { padding: .3rem .4rem; }
+      .az-btn { padding: 2px 7px; font-size: .68rem; }
+      .tab-btn { padding: 4px 10px; font-size: .75rem; }
+      #player-volume { display: none; }
+      #psico-player { padding: 6px 10px; gap: 8px; }
+      #player-title { font-size: .74rem; }
+    }
   </style>
 </head>
 <body>
 
-  <nav class="navbar navbar-expand-lg navbar-psicoapp navbar-dark">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="/">PsicoApp</a>
-      <div class="navbar-nav ms-auto">
-        {% if user.is_authenticated %}
-          <a class="nav-link text-white" href="{% url 'cuentas:logout' %}">
-            Cerrar sesion
-          </a>
-        {% else %}
-          <a class="nav-link text-white" href="{% url 'gestion_usuarios:ingresar_pin' %}">
-            Fui invitado
-          </a>
-          <a class="nav-link text-white" href="{% url 'cuentas:login' %}">
-            Iniciar sesion
-          </a>
-        {% endif %}
-      </div>
-    </div>
-  </nav>
+<!-- ══ Sidebar ════════════════════════════════════════════════════ -->
+<nav class="sidebar" id="sidebar" aria-label="Menú principal">
 
-  <div class="container mt-3">
-    {% if messages %}
-      {% for mensaje in messages %}
-        <div class="alert alert-{{ mensaje.tags }} alert-dismissible fade show" role="alert">
-          {{ mensaje }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      {% endfor %}
-    {% endif %}
+  {% if user.is_authenticated %}
+
+  <a class="sidebar-brand" href="/">
+    <div class="sidebar-brand-icon">P</div>
+    <span class="sidebar-brand-text">PsicoApp</span>
+  </a>
+
+  <div class="sidebar-section">
+    <ul class="list-unstyled mb-0">
+
+      {% if user.es_admin or user.is_superuser %}
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:dashboard_admin' %}" class="sidebar-nav-link">
+            <i class="bi bi-speedometer2"></i> Panel de control
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:gestionar_musica' %}" class="sidebar-nav-link">
+            <i class="bi bi-music-note-list"></i> Música ambiental
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:gestionar_datos_dia' %}" class="sidebar-nav-link">
+            <i class="bi bi-lightbulb"></i> Datos del día
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'mantenedores:terminos' %}" class="sidebar-nav-link">
+            <i class="bi bi-file-text"></i> Términos
+          </a>
+        </li>
+
+      {% elif user.es_especialista %}
+        <li class="sidebar-nav-item">
+          <a href="{% url 'gestion_usuarios:dashboard' %}" class="sidebar-nav-link">
+            <i class="bi bi-speedometer2"></i> Inicio
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuestionarios:listado' %}" class="sidebar-nav-link">
+            <i class="bi bi-clipboard-check"></i> Mis cuestionarios
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="sidebar-nav-link">
+            <i class="bi bi-people"></i> Mis pacientes
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuestionarios:cuestionarios_publicos' %}" class="sidebar-nav-link">
+            <i class="bi bi-book"></i> Biblioteca pública
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:solicitar_baja_especialista' %}" class="sidebar-nav-link">
+            <i class="bi bi-box-arrow-right"></i> Solicitar baja
+          </a>
+        </li>
+
+      {% elif user.es_paciente %}
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:perfil_paciente' %}" class="sidebar-nav-link">
+            <i class="bi bi-house"></i> Inicio
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuestionarios:mis_cuestionarios_paciente' %}" class="sidebar-nav-link">
+            <i class="bi bi-clipboard-check"></i> Cuestionarios
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:registrar_animo' %}" class="sidebar-nav-link">
+            <i class="bi bi-emoji-smile"></i> Mi ánimo
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:responder_pregunta_diaria' %}" class="sidebar-nav-link">
+            <i class="bi bi-question-circle"></i> Pregunta diaria
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:respiracion_guiada' %}" class="sidebar-nav-link">
+            <i class="bi bi-wind"></i> Respirar
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:mis_favoritos_datos' %}" class="sidebar-nav-link">
+            <i class="bi bi-star"></i> Favoritos
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:editar_perfil_paciente' %}" class="sidebar-nav-link">
+            <i class="bi bi-person-circle"></i> Mi perfil
+          </a>
+        </li>
+
+      {% endif %}
+
+    </ul>
   </div>
 
-  <main class="container my-4">
+  <div class="sidebar-footer">
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</div>
+      <div class="sidebar-user-role">{{ user.get_rol_display }}</div>
+    </div>
+    <form method="post" action="{% url 'cuentas:logout' %}" class="m-0">
+      {% csrf_token %}
+      <button type="submit" class="sidebar-logout-btn">
+        <i class="bi bi-box-arrow-left"></i> Cerrar sesión
+      </button>
+    </form>
+  </div>
+
+  {% else %}
+
+  <a class="sidebar-brand" href="/">
+    <div class="sidebar-brand-icon">P</div>
+    <span class="sidebar-brand-text">PsicoApp</span>
+  </a>
+  <div class="sidebar-section">
+    <ul class="list-unstyled mb-0">
+      <li class="sidebar-nav-item">
+        <a href="{% url 'cuentas:login' %}" class="sidebar-nav-link">
+          <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+        </a>
+      </li>
+      <li class="sidebar-nav-item">
+        <a href="{% url 'gestion_usuarios:ingresar_pin' %}" class="sidebar-nav-link">
+          <i class="bi bi-person-plus"></i> Fui invitado
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  {% endif %}
+
+</nav>
+
+<div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+<!-- ══ Contenido principal ════════════════════════════════════════ -->
+<div class="main-wrapper">
+
+  <header class="mobile-topbar">
+    <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menú">
+      <i class="bi bi-list"></i>
+    </button>
+    <span class="mobile-topbar-brand">PsicoApp</span>
+    {% if user.is_authenticated %}
+      <span class="badge bg-light text-secondary border" style="font-size:.68rem;">{{ user.get_rol_display }}</span>
+    {% endif %}
+  </header>
+
+  {% if messages %}
+  <div class="main-messages">
+    {% for mensaje in messages %}
+      <div class="alert alert-{{ mensaje.tags }} alert-dismissible fade show" role="alert">
+        {{ mensaje }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <main class="main-content">
     {% block contenido %}{% endblock %}
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+<!-- ══ Reproductor (pacientes) ════════════════════════════════════ -->
+{% if user.is_authenticated and user.es_paciente and not user.is_superuser %}
+<div id="psico-player" role="region" aria-label="Reproductor de música ambiental">
+  <button class="player-btn" id="btn-prev" title="Anterior">&#9664;&#9664;</button>
+  <button class="player-btn" id="btn-play" title="Reproducir / Pausar">&#9654;</button>
+  <button class="player-btn" id="btn-next" title="Siguiente">&#9654;&#9654;</button>
+  <span id="player-title">Cargando...</span>
+  <span style="font-size:.78rem;color:var(--red);flex-shrink:0;">🎵</span>
+  <input type="range" id="player-volume" min="0" max="1" step="0.05" value="0.7" title="Volumen">
+</div>
+<audio id="psico-audio" preload="auto"></audio>
+<script>
+(function(){
+  const PISTAS_URL='{% url "cuentas:pistas_json" %}',SK='psicoplayer_v1';
+  const player=document.getElementById('psico-player'),audio=document.getElementById('psico-audio');
+  const btnPlay=document.getElementById('btn-play'),btnPrev=document.getElementById('btn-prev');
+  const btnNext=document.getElementById('btn-next'),title=document.getElementById('player-title');
+  const volCtrl=document.getElementById('player-volume');
+  let pistas=[],idx=0;
+  function ls(){try{return JSON.parse(sessionStorage.getItem(SK))||{};}catch{return{};}}
+  function ss(){sessionStorage.setItem(SK,JSON.stringify({idx,time:audio.currentTime,volume:audio.volume,playing:!audio.paused}));}
+  function ui(){btnPlay.innerHTML=audio.paused?'&#9654;':'&#9646;&#9646;';title.textContent=pistas.length?pistas[idx].titulo:'';}
+  function lt(ti,s,ap){
+    idx=((ti%pistas.length)+pistas.length)%pistas.length;
+    audio.src=pistas[idx].url;audio.load();audio.volume=parseFloat(volCtrl.value);
+    audio.addEventListener('canplay',function h(){audio.removeEventListener('canplay',h);if(s>0){try{audio.currentTime=s;}catch{}}if(ap)audio.play().catch(()=>{});ui();});
+  }
+  btnPlay.addEventListener('click',function(){if(!pistas.length)return;if(audio.paused){if(!audio.src)lt(idx,0,true);else audio.play().catch(()=>{});}else audio.pause();ui();ss();});
+  btnPrev.addEventListener('click',function(){if(!pistas.length)return;lt(idx-1,0,!audio.paused);ss();});
+  btnNext.addEventListener('click',function(){if(!pistas.length)return;lt(idx+1,0,!audio.paused);ss();});
+  audio.addEventListener('ended',function(){lt(idx+1,0,true);});
+  audio.addEventListener('play',ui);audio.addEventListener('pause',ui);
+  volCtrl.addEventListener('input',function(){audio.volume=parseFloat(this.value);ss();});
+  setInterval(ss,1000);window.addEventListener('pagehide',ss);
+  fetch(PISTAS_URL).then(r=>r.json()).then(data=>{
+    pistas=data.pistas||[];if(!pistas.length)return;
+    player.classList.add('visible');document.body.classList.add('has-player');
+    const sv=ls();const si=(sv.idx!==undefined&&sv.idx<pistas.length)?sv.idx:0;
+    volCtrl.value=sv.volume!==undefined?sv.volume:0.7;audio.volume=parseFloat(volCtrl.value);
+    lt(si,sv.time||0,!!sv.playing);
+  }).catch(()=>{});
+})();
+</script>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Sidebar móvil
+(function(){
+  const sb=document.getElementById('sidebar'),bd=document.getElementById('sidebar-backdrop'),btn=document.getElementById('hamburger-btn');
+  if(!sb)return;
+  function open(){sb.classList.add('open');bd.classList.add('show');document.body.style.overflow='hidden';}
+  function close(){sb.classList.remove('open');bd.classList.remove('show');document.body.style.overflow='';}
+  if(btn)btn.addEventListener('click',open);
+  if(bd)bd.addEventListener('click',close);
+  sb.querySelectorAll('.sidebar-nav-link').forEach(function(a){a.addEventListener('click',function(){if(window.innerWidth<=768)close();});});
+})();
+
+// Marcar enlace activo
+(function(){
+  const path=window.location.pathname;
+  document.querySelectorAll('.sidebar-nav-link').forEach(function(link){
+    const href=link.getAttribute('href');
+    if(!href||href==='/')return;
+    if(path.startsWith(href))link.classList.add('active');
+  });
+})();
+</script>
 </body>
 </html>

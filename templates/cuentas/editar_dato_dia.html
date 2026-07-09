@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block titulo %}Editar dato del día — PsicoApp{% endblock %}
+
+{% block contenido %}
+
+<a href="{% url 'cuentas:gestionar_datos_dia' %}" class="text-muted small">&larr; Volver a datos del día</a>
+<h2 class="mt-2 mb-4">Editar dato del día</h2>
+
+<div class="card shadow-sm" style="max-width:700px;">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label for="texto" class="form-label">
+          Texto <span class="text-danger">*</span>
+          <span class="text-muted small">(máximo {{ max_palabras }} palabras)</span>
+        </label>
+        <textarea id="texto" name="texto" rows="5"
+                  class="form-control {% if errores.texto %}is-invalid{% endif %}"
+                  required>{{ dato.texto }}</textarea>
+        {% if errores.texto %}
+          <div class="invalid-feedback">{{ errores.texto }}</div>
+        {% endif %}
+        <div class="form-text" id="contador-palabras">0 / {{ max_palabras }} palabras</div>
+      </div>
+
+      <div class="mb-4">
+        <label for="fuente" class="form-label">
+          Fuente <span class="text-danger">*</span>
+        </label>
+        <input type="text" id="fuente" name="fuente" maxlength="200"
+               class="form-control {% if errores.fuente %}is-invalid{% endif %}"
+               value="{{ dato.fuente }}" required>
+        {% if errores.fuente %}
+          <div class="invalid-feedback">{{ errores.fuente }}</div>
+        {% endif %}
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-danger">Guardar cambios</button>
+        <a href="{% url 'cuentas:gestionar_datos_dia' %}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  const textarea = document.getElementById('texto');
+  const contador = document.getElementById('contador-palabras');
+  const max      = {{ max_palabras }};
+
+  function actualizar() {
+    const palabras = textarea.value.trim() ? textarea.value.trim().split(/\s+/).length : 0;
+    contador.textContent = palabras + ' / ' + max + ' palabras';
+    contador.style.color = palabras > max ? '#721c24' : '#6c757d';
+  }
+
+  textarea.addEventListener('input', actualizar);
+  actualizar();
+})();
+</script>
+
+{% endblock %}

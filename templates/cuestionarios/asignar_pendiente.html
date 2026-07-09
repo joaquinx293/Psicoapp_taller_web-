@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block titulo %}Precargar cuestionarios{% endblock %}
+{% block contenido %}
+
+<a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="text-muted small">&larr; Volver a mis pacientes</a>
+
+<h3 class="mt-2 mb-1">Cuestionarios para {{ invitacion.nombre_paciente }}</h3>
+<div class="alert alert-warning d-flex align-items-center gap-2 mt-2 mb-4">
+  <span>&#9888;</span>
+  <span>
+    Este paciente aún no ha completado su registro (<strong>{{ invitacion.correo_paciente }}</strong>).
+    Los cuestionarios que selecciones se asignarán automáticamente en cuanto active su cuenta.
+  </span>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="row g-3 mb-4">
+    {% for c in cuestionarios_disponibles %}
+    <div class="col-md-6">
+      <div class="card shadow-sm {% if c.pk in asignados_ids %}border-danger{% endif %}">
+        <div class="card-body d-flex align-items-start gap-3">
+          <input class="form-check-input mt-1 flex-shrink-0" type="checkbox"
+                 name="cuestionarios" value="{{ c.pk }}" id="c{{ c.pk }}"
+                 {% if c.pk in asignados_ids %}checked{% endif %}>
+          <label class="form-check-label w-100" for="c{{ c.pk }}" style="cursor:pointer">
+            <div class="d-flex justify-content-between">
+              <span class="fw-semibold">{{ c.nombre }}</span>
+              {% if c.subtipo == 'gad7' %}
+                <span class="badge bg-info text-dark">GAD-7</span>
+              {% elif c.estado == 'aprobado' %}
+                <span class="badge bg-success">Aprobado</span>
+              {% else %}
+                <span class="badge bg-secondary">Borrador</span>
+              {% endif %}
+            </div>
+            <p class="text-muted small mb-0 mt-1">
+              {{ c.descripcion|default:"Sin descripción"|truncatechars:80 }}
+              &middot; {{ c.cantidad_preguntas_activas }} pregunta(s)
+            </p>
+          </label>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="alert alert-info">No tienes cuestionarios disponibles para asignar.</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <button type="submit" class="btn btn-danger">Guardar preconfiguración</button>
+  <a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="btn btn-link">Cancelar</a>
+</form>
+{% endblock %}

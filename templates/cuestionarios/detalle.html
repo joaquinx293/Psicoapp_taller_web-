@@ -5,46 +5,51 @@
 <a href="{% url 'cuestionarios:listado' %}" class="text-muted small">&larr; Volver a mis cuestionarios</a>
 
 <div class="d-flex justify-content-between align-items-center mt-2 mb-1">
-  <h2 class="mb-0">{{ cuestionario.nombre }}</h2>
+  <div>
+    <h2 class="mb-0">{{ cuestionario.nombre }}</h2>
+    {% if cuestionario.id_cuestionario %}
+      <span class="text-muted small">ID: <code>{{ cuestionario.id_cuestionario }}</code></span>
+    {% endif %}
+  </div>
   <div class="d-flex gap-2 align-items-center">
     {% if cuestionario.estado == 'borrador' %}
       <span class="badge bg-secondary">Borrador</span>
-    {% elif cuestionario.estado == 'en_revision' %}
-      <span class="badge bg-warning text-dark">En revision</span>
     {% elif cuestionario.estado == 'aprobado' %}
       <span class="badge bg-success">Aprobado</span>
-    {% elif cuestionario.estado == 'rechazado' %}
-      <span class="badge bg-danger">Rechazado</span>
+    {% elif cuestionario.estado == 'publicado' %}
+      <span class="badge bg-primary">Publicado</span>
+    {% elif cuestionario.estado == 'archivado' %}
+      <span class="badge bg-dark">Archivado</span>
     {% endif %}
 
-    {% if cuestionario.puede_enviar_revision %}
+    {% if cuestionario.estado == 'borrador' %}
       <form method="post" action="{% url 'cuestionarios:enviar_revision' cuestionario.pk %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-sm btn-warning"
           {% if preguntas|length == 0 %}disabled title="Agrega al menos una pregunta"{% endif %}>
-          Enviar a revision
+          Solicitar aprobación
         </button>
       </form>
     {% endif %}
   </div>
 </div>
 
-{% if cuestionario.estado == 'rechazado' %}
-<div class="alert alert-danger mt-2">
-  Este cuestionario fue rechazado. Corrige las preguntas y vuelvelo a enviar.
-</div>
-{% elif cuestionario.estado == 'en_revision' %}
-<div class="alert alert-warning mt-2">
-  Este cuestionario esta en revision. No puedes editarlo hasta que el administrador lo revise.
-</div>
-{% endif %}
-
 <p class="text-muted mt-1">{{ cuestionario.descripcion }}</p>
 
 <div class="row mt-3">
   <!-- Lista de preguntas -->
-  <div class="{% if cuestionario.estado == 'borrador' or cuestionario.estado == 'rechazado' %}col-md-7{% else %}col-12{% endif %}">
-    <h5>Preguntas ({{ preguntas|length }})</h5>
+  <div class="{% if cuestionario.estado != 'archivado' %}col-md-7{% else %}col-12{% endif %}">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Preguntas ({{ preguntas|length }})</h5>
+      {% if cuestionario.subtipo == 'personalizado' and preguntas|length > 1 %}
+        {% if cuestionario.estado != 'archivado' %}
+        <a href="{% url 'cuestionarios:reordenar_preguntas' cuestionario.pk %}"
+           class="btn btn-sm btn-outline-secondary">
+          ⠿ Reordenar
+        </a>
+        {% endif %}
+      {% endif %}
+    </div>
     {% if preguntas %}
     <ul class="list-group">
       {% for p in preguntas %}
@@ -55,9 +60,12 @@
             <div class="mt-1">
               <span class="badge bg-light text-dark border">{{ p.get_escala_display }}</span>
               <span class="badge bg-light text-dark border ms-1">peso: {{ p.peso }}</span>
+              {% if p.codigo %}
+                <span class="badge bg-secondary ms-1 font-monospace">{{ p.codigo }}</span>
+              {% endif %}
             </div>
           </div>
-          {% if cuestionario.estado == 'borrador' or cuestionario.estado == 'rechazado' %}
+          {% if cuestionario.estado != 'archivado' %}
           <div class="d-flex gap-1 ms-2">
             <a href="{% url 'cuestionarios:editar_pregunta' p.pk %}"
                class="btn btn-sm btn-outline-secondary">Editar</a>
@@ -70,18 +78,18 @@
       {% endfor %}
     </ul>
     {% else %}
-    <div class="alert alert-info">Aun no hay preguntas. Agrega la primera.</div>
+    <div class="alert alert-info">Aún no hay preguntas. Agrega la primera.</div>
     {% endif %}
   </div>
 
   <!-- Formulario agregar pregunta + importar -->
-  {% if cuestionario.estado == 'borrador' or cuestionario.estado == 'rechazado' %}
+  {% if cuestionario.estado != 'archivado' %}
   <div class="col-md-5">
     <!-- Agregar pregunta nueva -->
     <div class="card shadow-sm mb-3">
       <div class="card-body">
         <h6 class="mb-3">Agregar pregunta</h6>
-        <form method="post">
+        <form method="post" id="form-pregunta">
           {% csrf_token %}
           <div class="mb-3">
             <label class="form-label">Texto de la pregunta</label>
@@ -94,14 +102,60 @@
             <label class="form-label">Tipo de respuesta</label>
             {{ form.escala }}
           </div>
-          <div class="mb-3">
-            <label class="form-label">Peso (1 a 10)</label>
+
+          <!-- Etiquetas para tipo binario -->
+          <div id="campos-binario" class="mb-3" style="display:none;">
+            <label class="form-label small fw-semibold">Etiquetas personalizadas</label>
+            <div class="d-flex gap-2">
+              <div class="w-50">
+                <label class="form-label small">Opción 1 (valor 0)</label>
+                {{ form.etiqueta_opcion_1 }}
+                {% if form.etiqueta_opcion_1.errors %}
+                  <div class="text-danger small">{{ form.etiqueta_opcion_1.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+              <div class="w-50">
+                <label class="form-label small">Opción 2 (valor 1)</label>
+                {{ form.etiqueta_opcion_2 }}
+                {% if form.etiqueta_opcion_2.errors %}
+                  <div class="text-danger small">{{ form.etiqueta_opcion_2.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Peso (oculto para tipos sin puntaje) -->
+          <div id="campo-peso" class="mb-3">
+            <label class="form-label">Peso (0 a 10)</label>
             {{ form.peso }}
           </div>
+          <div id="aviso-sin-puntaje" class="alert alert-info small py-2" style="display:none;">
+            Este tipo de pregunta no suma al puntaje total.
+          </div>
+
           <button type="submit" class="btn btn-danger w-100">Agregar pregunta</button>
         </form>
       </div>
     </div>
+
+    <script>
+      const escalaSelect = document.getElementById('id_escala');
+      const camposBinario = document.getElementById('campos-binario');
+      const campoPeso = document.getElementById('campo-peso');
+      const avisoSinPuntaje = document.getElementById('aviso-sin-puntaje');
+      const SIN_PUNTAJE = ['texto', 'fecha'];
+
+      function actualizarCampos() {
+        const val = escalaSelect.value;
+        camposBinario.style.display = (val === 'binario') ? 'block' : 'none';
+        const sinPuntaje = SIN_PUNTAJE.includes(val);
+        campoPeso.style.display = sinPuntaje ? 'none' : 'block';
+        avisoSinPuntaje.style.display = sinPuntaje ? 'block' : 'none';
+      }
+
+      escalaSelect.addEventListener('change', actualizarCampos);
+      actualizarCampos();
+    </script>
 
     <!-- Importar pregunta de otro cuestionario -->
     {% if preguntas_importables %}
@@ -109,20 +163,56 @@
       <div class="card-body">
         <h6 class="mb-3">Importar pregunta</h6>
         <p class="text-muted small mb-3">Copia una pregunta de otro cuestionario tuyo.</p>
+
+        <!-- Filtro texto para el selector -->
+        <input type="text" id="filtro-importar"
+               class="form-control form-control-sm mb-2"
+               placeholder="Buscar pregunta o cuestionario...">
+
         <form method="post" action="{% url 'cuestionarios:importar_pregunta' cuestionario.pk %}">
           {% csrf_token %}
           <div class="mb-3">
-            <select name="pregunta_id" class="form-select form-select-sm" required>
+            <select name="pregunta_id" id="select-importar" class="form-select form-select-sm" required>
               <option value="">— Selecciona una pregunta —</option>
               {% for p in preguntas_importables %}
-              <option value="{{ p.pk }}">
+              <option value="{{ p.pk }}"
+                      data-texto="{{ p.texto|lower }} {{ p.cuestionario.nombre|lower }}">
                 [{{ p.cuestionario.nombre|truncatechars:20 }}] {{ p.texto|truncatechars:50 }}
               </option>
               {% endfor %}
             </select>
           </div>
+          <p id="sin-resultados-importar" class="text-muted small" style="display:none;">
+            No se encontraron preguntas.
+          </p>
           <button type="submit" class="btn btn-outline-secondary w-100 btn-sm">Importar copia</button>
         </form>
+
+        <script>
+        (function () {
+          const filtroInput = document.getElementById('filtro-importar');
+          const selectEl    = document.getElementById('select-importar');
+          const sinRes      = document.getElementById('sin-resultados-importar');
+          if (!filtroInput || !selectEl) return;
+
+          filtroInput.addEventListener('input', function () {
+            const q = this.value.trim().toLowerCase();
+            let vis = 0;
+            Array.from(selectEl.options).forEach(opt => {
+              if (!opt.value) return; // placeholder
+              const texto = opt.getAttribute('data-texto') || '';
+              const ok = !q || texto.includes(q);
+              opt.hidden = !ok;
+              if (ok) vis++;
+            });
+            // Reset selection if current option is hidden
+            if (selectEl.selectedOptions[0] && selectEl.selectedOptions[0].hidden) {
+              selectEl.value = '';
+            }
+            sinRes.style.display = vis === 0 ? '' : 'none';
+          });
+        })();
+        </script>
       </div>
     </div>
     {% endif %}

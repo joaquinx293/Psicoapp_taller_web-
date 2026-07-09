@@ -1,31 +1,154 @@
 {% extends "base.html" %}
-{% block titulo %}Mi perfil - Paciente{% endblock %}
+{% block titulo %}Inicio — PsicoApp{% endblock %}
+
 {% block contenido %}
-<h2 class="mb-4">Bienvenido, {{ user.first_name|default:user.username }}</h2>
+<style>
+  /* ── Tarjetas de navegación ── */
+  .nav-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.4rem .75rem;
+    border-radius: 16px;
+    text-decoration: none;
+    color: inherit;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    border: 1.5px solid #f0f0f0;
+    transition: transform .15s, box-shadow .15s;
+    min-height: 110px;
+    position: relative;
+  }
+  .nav-card:hover, .nav-card:focus {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(192,57,43,.18);
+    border-color: #C0392B;
+    color: inherit;
+    text-decoration: none;
+  }
+  .nav-icon { font-size: 2rem; line-height: 1; margin-bottom: .45rem; }
+  .nav-label { font-size: .88rem; font-weight: 600; text-align: center; color: #333; line-height: 1.2; }
 
-<div class="row g-3">
-  <div class="col-md-6">
-    <div class="card shadow-sm h-100">
-      <div class="card-body">
-        <h5 class="card-title">Mi cuenta</h5>
-        <p class="text-muted mb-1">Usuario: {{ user.username }}</p>
-        <p class="text-muted mb-1">Correo: {{ user.email }}</p>
-        <p class="text-muted mb-0">Rol: Paciente</p>
-      </div>
+  /* Badge de pendientes */
+  .nav-badge {
+    position: absolute; top: 9px; right: 9px;
+    background: #C0392B; color: white;
+    border-radius: 50%; min-width: 20px; height: 20px;
+    font-size: .65rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+  }
+
+  /* Banner de ánimo */
+  .animo-banner {
+    background: linear-gradient(135deg, #C0392B 0%, #E74C3C 100%);
+    border-radius: 14px;
+    color: white;
+    padding: .9rem 1.1rem;
+  }
+</style>
+
+<!-- ── Saludo ── -->
+<div class="mb-3">
+  <h2 class="mb-0 fw-bold">Hola, {{ user.first_name|default:user.username }} 👋</h2>
+</div>
+
+<!-- ── Prioridad 1: Ánimo de hoy ── -->
+<div class="animo-banner mb-3">
+  <div class="d-flex justify-content-between align-items-center gap-2">
+    <div>
+      <p class="mb-1 small" style="opacity:.8;">Estado de ánimo de hoy</p>
+      {% if animo_hoy %}
+        <p class="mb-0 fw-bold">{{ animo_hoy.valor }}/10 — {{ animo_hoy.get_etiqueta }}</p>
+      {% else %}
+        <p class="mb-0 fw-bold">¿Cómo te sientes hoy?</p>
+      {% endif %}
     </div>
+    <a href="{% url 'cuentas:registrar_animo' %}"
+       class="btn btn-sm btn-light text-danger fw-semibold flex-shrink-0">
+      {% if animo_hoy %}Actualizar{% else %}Registrar{% endif %}
+    </a>
   </div>
+</div>
 
-  <div class="col-md-6">
-    <div class="card shadow-sm h-100">
-      <div class="card-body d-flex flex-column">
-        <h5 class="card-title">Mis cuestionarios</h5>
-        <p class="text-muted mb-3">Responde los cuestionarios que tu especialista te ha asignado.</p>
-        <a href="{% url 'cuestionarios:mis_cuestionarios_paciente' %}"
-           class="btn btn-danger mt-auto align-self-start">
-          Ver mis cuestionarios
-        </a>
+<!-- ── Prioridad 2: Dato del día ── -->
+{% if dato_del_dia %}
+<div class="card border-start border-danger border-4 shadow-sm mb-4">
+  <div class="card-body py-3">
+    <div class="d-flex justify-content-between align-items-start gap-2">
+      <div>
+        <p class="text-danger fw-semibold small mb-1">💡 Dato del día</p>
+        <p class="mb-1">{{ dato_del_dia.texto }}</p>
+        <small class="text-muted">{{ dato_del_dia.fuente }}</small>
       </div>
+      <form method="post" action="{% url 'cuentas:toggle_favorito_dato' dato_del_dia.pk %}" class="flex-shrink-0">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="cuentas:perfil_paciente">
+        <button type="submit"
+                class="btn btn-sm {% if dato_es_favorito %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                title="{% if dato_es_favorito %}Quitar de favoritos{% else %}Guardar como favorito{% endif %}">
+          {% if dato_es_favorito %}❤️{% else %}🤍{% endif %}
+        </button>
+      </form>
     </div>
   </div>
 </div>
+{% endif %}
+
+<!-- ── Grid de navegación ── -->
+<div class="row g-3">
+
+  <div class="col-6 col-md-4">
+    <a href="{% url 'cuestionarios:mis_cuestionarios_paciente' %}" class="nav-card">
+      {% if cuestionarios_pendientes > 0 %}
+        <span class="nav-badge">{{ cuestionarios_pendientes }}</span>
+      {% endif %}
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Cuestionarios</span>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-4">
+    <a href="{% url 'cuentas:calendario_animo' %}" class="nav-card">
+      <span class="nav-icon">📅</span>
+      <span class="nav-label">Mi ánimo</span>
+    </a>
+  </div>
+
+  {% if pregunta_diaria %}
+  <div class="col-6 col-md-4">
+    <a href="{% url 'cuentas:responder_pregunta_diaria' %}" class="nav-card">
+      {% if not pregunta_ya_respondida %}
+        <span class="nav-badge">!</span>
+      {% endif %}
+      <span class="nav-icon">❓</span>
+      <span class="nav-label">Pregunta<br>de hoy</span>
+    </a>
+  </div>
+  {% endif %}
+
+  <div class="col-6 col-md-4">
+    <a href="{% url 'cuentas:respiracion_guiada' %}" class="nav-card">
+      <span class="nav-icon">🌬️</span>
+      <span class="nav-label">Respirar</span>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-4">
+    <a href="{% url 'cuentas:mis_favoritos_datos' %}" class="nav-card">
+      <span class="nav-icon">❤️</span>
+      <span class="nav-label">Favoritos</span>
+    </a>
+  </div>
+
+  <div class="col-6 col-md-4">
+    <a href="{% url 'cuentas:editar_perfil_paciente' %}" class="nav-card">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Mi perfil</span>
+    </a>
+  </div>
+
+</div>
+
 {% endblock %}

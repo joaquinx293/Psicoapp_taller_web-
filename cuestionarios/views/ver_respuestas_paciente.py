@@ -1,4 +1,4 @@
-# Especialista ve las respuestas de un paciente
+import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
@@ -16,14 +16,12 @@ def ver_respuestas_paciente(request, paciente_pk):
 
     paciente = get_object_or_404(Usuario, pk=paciente_pk, rol='paciente')
 
-    # Verificar que el paciente esté asignado a este especialista
     if not AsignacionCuestionario.objects.filter(
         especialista=request.user,
         paciente=paciente
     ).exists():
         return redirect('gestion_usuarios:listado_pacientes')
 
-    # Todas las respuestas del paciente a cuestionarios de este especialista
     respuestas = RespuestaCuestionario.objects.filter(
         paciente=paciente,
         cuestionario__especialista=request.user,
@@ -31,7 +29,17 @@ def ver_respuestas_paciente(request, paciente_pk):
         'respuestas_preguntas__pregunta'
     ).order_by('-fecha_respuesta')
 
+    # HU-036: datos para gráfico de evolución de puntajes
+    evolucion = {}
+    for r in respuestas.order_by('fecha_respuesta'):
+        nombre_test = r.cuestionario.nombre
+        if nombre_test not in evolucion:
+            evolucion[nombre_test] = {'fechas': [], 'puntajes': []}
+        evolucion[nombre_test]['fechas'].append(r.fecha_respuesta.strftime('%d/%m/%Y %H:%M'))
+        evolucion[nombre_test]['puntajes'].append(r.puntaje_total())
+
     return render(request, 'cuestionarios/ver_respuestas_paciente.html', {
         'paciente': paciente,
         'respuestas': respuestas,
+        'evolucion_json': json.dumps(evolucion),
     })

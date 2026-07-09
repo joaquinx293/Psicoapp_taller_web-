@@ -2,35 +2,178 @@
 {% block titulo %}Mis cuestionarios{% endblock %}
 {% block contenido %}
 
-<h2 class="mb-4">Mis cuestionarios</h2>
+<style>
+  .az-bar { display: flex; flex-wrap: wrap; gap: 4px; }
+  .az-btn {
+    padding: 2px 9px; font-size: .78rem; font-weight: 600;
+    border: 1px solid #dee2e6; background: white; border-radius: 4px; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .az-btn:hover:not([disabled]), .az-btn.activo {
+    background: #C0392B; color: white; border-color: #C0392B;
+  }
+  .az-btn[disabled] { opacity: .28; cursor: default; }
+  .tabs-indice { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tab-btn {
+    padding: 4px 14px; border: 2px solid #dee2e6; background: white;
+    border-radius: 20px; font-size: .85rem; font-weight: 600; cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .tab-btn:hover, .tab-btn.activo { background: #C0392B; color: white; border-color: #C0392B; }
+  .tab-count { font-size: .72rem; margin-left: 3px; opacity: .8; }
+</style>
 
-{% if asignaciones %}
-<div class="row g-3">
-  {% for asig in asignaciones %}
-  <div class="col-md-6">
-    <div class="card shadow-sm h-100">
+<h2 class="mb-3">Mis cuestionarios</h2>
+
+{% if items %}
+
+<!-- ── Tabs de estado ─────────────────────────────────────────── -->
+<div class="tabs-indice mb-3" id="tabs-pac">
+  <button class="tab-btn activo" data-tab="todos">Todos</button>
+  <button class="tab-btn" data-tab="pendiente">Pendiente</button>
+  <button class="tab-btn" data-tab="respondido">Respondido</button>
+  <button class="tab-btn" data-tab="agotado">Sin intentos</button>
+</div>
+
+<!-- ── Índice A-Z ─────────────────────────────────────────────── -->
+<div class="az-bar mb-3" id="az-pac"></div>
+
+<!-- ── Listado ────────────────────────────────────────────────── -->
+<div class="row g-3" id="lista-pac">
+  {% for item in items %}
+  {% with c=item.cuestionario %}
+  <div class="col-md-6 item-pac"
+       data-nombre="{{ c.nombre }}"
+       data-estado="{% if item.agotado %}agotado{% elif item.respondido %}respondido{% else %}pendiente{% endif %}">
+    <div class="card shadow-sm h-100 {% if item.agotado %}border-secondary opacity-75{% endif %}">
       <div class="card-body">
-        <h5 class="card-title">{{ asig.cuestionario.nombre }}</h5>
-        <p class="text-muted small mb-2">{{ asig.cuestionario.descripcion|default:"" }}</p>
-        <p class="small mb-3">{{ asig.cuestionario.cantidad_preguntas_activas }} pregunta(s)</p>
 
-        {% if asig.cuestionario.pk in respondidos_ids %}
-          <span class="badge bg-success me-2">Ya respondido</span>
-          <a href="{% url 'cuestionarios:responder_cuestionario' asig.cuestionario.pk %}"
-             class="btn btn-sm btn-outline-secondary">Responder de nuevo</a>
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="card-title mb-0">{{ c.nombre }}</h5>
+          <div class="d-flex gap-1 flex-shrink-0 ms-2 flex-wrap">
+            {% if item.agotado %}
+              <span class="badge bg-secondary">Sin intentos</span>
+            {% elif item.respondido %}
+              <span class="badge bg-success">Respondido</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">Pendiente</span>
+            {% endif %}
+            {% if c.subtipo == 'personalizado' %}
+              <span class="badge bg-primary">Personalizado</span>
+            {% else %}
+              <span class="badge bg-info text-dark">Estándar</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <p class="text-muted small mb-2">{{ c.descripcion|default:"" }}</p>
+        <p class="small mb-2">{{ c.cantidad_preguntas_activas }} pregunta{{ c.cantidad_preguntas_activas|pluralize }}</p>
+
+        <!-- Intentos -->
+        <p class="small text-muted mb-3">
+          {% if item.intentos_maximos == 0 %}
+            Intentos: {{ item.intentos_usados }} realizados (ilimitados)
+          {% else %}
+            Intentos: {{ item.intentos_usados }} de {{ item.intentos_maximos }}
+            {% if item.restantes > 0 %}
+              <span class="text-success">({{ item.restantes }} restante{{ item.restantes|pluralize }})</span>
+            {% endif %}
+          {% endif %}
+        </p>
+
+        {% if item.agotado %}
+          <button class="btn btn-sm btn-secondary" disabled>Sin intentos disponibles</button>
+        {% elif item.respondido %}
+          <a href="{% url 'cuestionarios:responder_cuestionario' c.pk %}"
+             class="btn btn-sm btn-outline-danger">Responder de nuevo</a>
         {% else %}
-          <a href="{% url 'cuestionarios:responder_cuestionario' asig.cuestionario.pk %}"
+          <a href="{% url 'cuestionarios:responder_cuestionario' c.pk %}"
              class="btn btn-sm btn-danger">Responder</a>
         {% endif %}
+
       </div>
     </div>
   </div>
+  {% endwith %}
   {% endfor %}
 </div>
+
+<div id="sin-resultados-pac" class="alert alert-light border mt-3" style="display:none;">
+  No hay cuestionarios que coincidan con los filtros seleccionados.
+</div>
+
 {% else %}
 <div class="alert alert-info">
-  Tu especialista aun no te ha asignado cuestionarios.
+  Tu especialista aún no te ha asignado cuestionarios.
 </div>
 {% endif %}
+
+<script>
+(function () {
+  const contenedor = document.getElementById('lista-pac');
+  const azBar      = document.getElementById('az-pac');
+  const sinRes     = document.getElementById('sin-resultados-pac');
+  if (!contenedor || !azBar) return;
+
+  let filtroTab   = 'todos';
+  let filtroLetra = 'todos';
+  const items = Array.from(contenedor.querySelectorAll('.item-pac'));
+
+  // ── Contar y actualizar tabs ───────────────────────────────────
+  const counts = { pendiente: 0, respondido: 0, agotado: 0 };
+  items.forEach(el => {
+    const e = el.getAttribute('data-estado');
+    if (e in counts) counts[e]++;
+  });
+  document.querySelectorAll('#tabs-pac .tab-btn').forEach(btn => {
+    const tab = btn.getAttribute('data-tab');
+    const n   = tab === 'todos' ? items.length : (counts[tab] || 0);
+    btn.insertAdjacentHTML('beforeend', ` <span class="tab-count">(${n})</span>`);
+  });
+
+  // ── Construir índice A-Z ───────────────────────────────────────
+  const existentes = new Set(
+    items.map(el => (el.getAttribute('data-nombre') || '').trim().charAt(0).toUpperCase())
+         .filter(c => /[A-ZÁÉÍÓÚÑ]/.test(c))
+  );
+  const LETRAS = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('');
+  azBar.innerHTML =
+    '<button class="az-btn activo" data-letra="todos">Todos</button> ' +
+    LETRAS.map(l =>
+      `<button class="az-btn" data-letra="${l}"${existentes.has(l) ? '' : ' disabled'}>${l}</button>`
+    ).join(' ');
+
+  // ── Filtrar ────────────────────────────────────────────────────
+  function filtrar() {
+    let vis = 0;
+    items.forEach(el => {
+      const nombre = (el.getAttribute('data-nombre') || '').trim().toUpperCase();
+      const estado = el.getAttribute('data-estado') || '';
+      const ok = (filtroLetra === 'todos' || nombre.charAt(0) === filtroLetra) &&
+                 (filtroTab   === 'todos' || estado === filtroTab);
+      el.style.display = ok ? '' : 'none';
+      if (ok) vis++;
+    });
+    sinRes.style.display = vis === 0 ? '' : 'none';
+  }
+
+  azBar.addEventListener('click', function (e) {
+    const btn = e.target.closest('.az-btn');
+    if (!btn || btn.disabled) return;
+    filtroLetra = btn.getAttribute('data-letra');
+    azBar.querySelectorAll('.az-btn').forEach(b => b.classList.toggle('activo', b === btn));
+    filtrar();
+  });
+
+  document.querySelectorAll('#tabs-pac .tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      filtroTab = this.getAttribute('data-tab');
+      document.querySelectorAll('#tabs-pac .tab-btn')
+               .forEach(b => b.classList.toggle('activo', b === this));
+      filtrar();
+    });
+  });
+})();
+</script>
 
 {% endblock %}

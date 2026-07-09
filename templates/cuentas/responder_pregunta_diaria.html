@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block titulo %}Pregunta de hoy — PsicoApp{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+
+    <a href="{% url 'cuentas:perfil_paciente' %}" class="text-muted small">
+      ← Volver a mi perfil
+    </a>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Pregunta de hoy — {{ hoy|date:"d/m/Y" }}</h5>
+      </div>
+      <div class="card-body">
+
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="alert alert-{{ msg.tags }} py-2">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <p class="fw-semibold fs-5 mb-4">{{ config.texto }}</p>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Tu respuesta</label>
+            <textarea name="texto" class="form-control" rows="5"
+                      maxlength="500" placeholder="Escribe aquí tu respuesta..."
+                      autofocus required></textarea>
+            <div class="form-text text-end">
+              <span id="contador">0</span>/500 caracteres
+            </div>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-danger">Enviar respuesta</button>
+            <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-outline-secondary">
+              Cancelar
+            </a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const textarea = document.querySelector('textarea[name="texto"]');
+  const contador = document.getElementById('contador');
+  textarea.addEventListener('input', () => {
+    contador.textContent = textarea.value.length;
+  });
+</script>
+{% endblock %}

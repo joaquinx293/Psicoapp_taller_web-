@@ -1,0 +1,502 @@
+{% extends "base.html" %}
+{% block titulo %}Panel de Administración — PsicoApp{% endblock %}
+
+{% block contenido %}
+<style>
+  .stat-card        { border-left: 4px solid #C0392B; border-radius: 8px; }
+  .stat-number      { font-size: 2.2rem; font-weight: 700; color: #C0392B; }
+  .badge-pendiente  { background-color: #C0392B; }
+  .btn-aprobar      { background-color: #C0392B; border-color: #C0392B; color: white; }
+  .btn-aprobar:hover{ background-color: #922B21; border-color: #922B21; color: white; }
+  .section-title    { border-bottom: 2px solid #C0392B; padding-bottom: 6px; color: #922B21; }
+  .table thead      { background-color: #C0392B; color: white; }
+  .estado-activo    { color: #155724; font-weight: 600; }
+  .estado-pendiente { color: #856404; font-weight: 600; }
+  .estado-rechazado { color: #721c24; font-weight: 600; }
+  .estado-inactivo  { color: #6c757d; font-weight: 600; }
+  /* ── Índice ── */
+  .az-bar { display: flex; flex-wrap: wrap; gap: 4px; }
+  .az-btn {
+    padding: 2px 9px; font-size: .78rem; font-weight: 600;
+    border: 1px solid #dee2e6; background: white; border-radius: 4px; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .az-btn:hover:not([disabled]), .az-btn.activo {
+    background: #C0392B; color: white; border-color: #C0392B;
+  }
+  .az-btn[disabled] { opacity: .28; cursor: default; }
+  .tabs-indice { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tab-btn {
+    padding: 4px 14px; border: 2px solid #dee2e6; background: white;
+    border-radius: 20px; font-size: .85rem; font-weight: 600; cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .tab-btn:hover, .tab-btn.activo { background: #C0392B; color: white; border-color: #C0392B; }
+  .tab-count { font-size: .72rem; margin-left: 3px; opacity: .8; }
+</style>
+
+<!-- Encabezado -->
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+  <div>
+    <h2 class="mb-0 fw-bold">Panel de Administración</h2>
+    <small class="text-muted">Bienvenido, {{ user.get_full_name|default:user.username }}</small>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'cuentas:gestionar_datos_dia' %}" class="btn btn-outline-danger btn-sm">
+      Dato del día
+    </a>
+    <a href="{% url 'cuentas:gestionar_musica' %}" class="btn btn-outline-danger btn-sm">
+      Música ambiental
+    </a>
+    <a href="{% url 'mantenedores:terminos' %}" class="btn btn-outline-danger btn-sm">
+      T&amp;C
+    </a>
+  </div>
+</div>
+
+<!-- Tarjetas de estadísticas: 2 por fila en móvil, 4 en desktop -->
+<div class="row g-3 mb-5">
+  <div class="col-6 col-md-3">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <p class="text-muted mb-1 small">Pacientes registrados</p>
+        <div class="stat-number">{{ total_pacientes }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <p class="text-muted mb-1 small">Especialistas activos</p>
+        <div class="stat-number">{{ total_especialistas }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body d-flex justify-content-between align-items-start">
+        <div>
+          <p class="text-muted mb-1 small">Pendientes</p>
+          <div class="stat-number">{{ total_pendientes }}</div>
+        </div>
+        {% if total_pendientes > 0 %}
+          <span class="badge badge-pendiente rounded-pill mt-1">!</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card shadow-sm h-100">
+      <div class="card-body">
+        <p class="text-muted mb-1 small">Cuestionarios</p>
+        <div class="stat-number">{{ total_cuestionarios }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SOLICITUDES DE BAJA ═══ -->
+{% if solicitudes_baja %}
+<h5 class="section-title mb-3">
+  Solicitudes de baja
+  <span class="badge bg-danger ms-2">{{ solicitudes_baja|length }}</span>
+</h5>
+<div class="card shadow-sm mb-5">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Solicitante</th>
+          <th>Tipo</th>
+          <th>Fecha</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sol in solicitudes_baja %}
+        <tr>
+          <td class="align-middle">
+            {% if sol.solicitante %}
+              <strong>{{ sol.solicitante.get_full_name|default:sol.solicitante.username }}</strong>
+              <br><small class="text-muted">{{ sol.solicitante.email }}</small>
+            {% else %}
+              <span class="text-muted">(usuario eliminado)</span>
+            {% endif %}
+          </td>
+          <td class="align-middle">
+            {% if sol.tipo == 'solicitud_baja_paciente' %}
+              <span class="badge bg-warning text-dark">Paciente</span>
+            {% elif sol.tipo == 'solicitud_baja_especialista' %}
+              <span class="badge bg-info text-dark">Especialista</span>
+            {% endif %}
+          </td>
+          <td class="align-middle text-muted small">{{ sol.fecha|date:"d/m/Y H:i" }}</td>
+          <td class="align-middle">
+            {% if sol.tipo == 'solicitud_baja_paciente' %}
+              <div class="d-flex gap-1 flex-wrap">
+                <form method="post" action="{% url 'cuentas:aprobar_baja_paciente' sol.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-aprobar btn-sm"
+                    onclick="return confirm('¿Aprobar la eliminación de la cuenta de {{ sol.solicitante.get_full_name|default:sol.solicitante.username }}?')">
+                    Aprobar
+                  </button>
+                </form>
+                <form method="post" action="{% url 'cuentas:rechazar_baja_paciente' sol.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    Rechazar
+                  </button>
+                </form>
+              </div>
+            {% elif sol.tipo == 'solicitud_baja_especialista' %}
+              <a href="{% url 'cuentas:ver_impacto_baja_especialista' sol.pk %}"
+                 class="btn btn-outline-danger btn-sm">
+                Ver impacto y decidir
+              </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ═══ CUESTIONARIOS PENDIENTES DE APROBACIÓN ═══ -->
+<h5 class="section-title mb-3">
+  Cuestionarios pendientes de aprobación
+  {% if en_revision %}
+    <span class="badge bg-danger ms-2">{{ en_revision|length }}</span>
+  {% endif %}
+</h5>
+{% if en_revision %}
+<div class="card shadow-sm mb-5">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Especialista</th>
+          <th>Tipo</th>
+          <th>Preguntas</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in en_revision %}
+        <tr>
+          <td class="align-middle fw-semibold">{{ c.nombre }}</td>
+          <td class="align-middle">{{ c.especialista.get_full_name|default:c.especialista.username }}</td>
+          <td class="align-middle">
+            <span class="badge bg-light text-dark border">{{ c.get_subtipo_display }}</span>
+          </td>
+          <td class="align-middle text-center">{{ c.cantidad_preguntas_activas }}</td>
+          <td class="align-middle">
+            <a href="{% url 'cuestionarios:revisar_cuestionario' c.pk %}"
+               class="btn btn-aprobar btn-sm">Revisar</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-light border mb-5">No hay cuestionarios pendientes de aprobación.</div>
+{% endif %}
+
+<!-- ═══ SOLICITUDES DE REGISTRO PENDIENTES ═══ -->
+{% if pendientes %}
+<h5 class="section-title mb-3">Solicitudes de registro pendientes</h5>
+<div class="card shadow-sm mb-5">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Especialidad</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for esp in pendientes %}
+        <tr>
+          <td class="align-middle">{{ esp.get_full_name|default:esp.username }}</td>
+          <td class="align-middle">{{ esp.email }}</td>
+          <td class="align-middle">{{ esp.especialidad|default:"—" }}</td>
+          <td class="align-middle">
+            <form method="post" action="{% url 'cuentas:aprobar_especialista' esp.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-aprobar btn-sm me-1">Aprobar</button>
+            </form>
+            <a href="{% url 'cuentas:rechazar_especialista' esp.pk %}"
+               class="btn btn-outline-secondary btn-sm">Rechazar</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ═══ GESTIÓN DE USUARIOS ═══ -->
+<h5 class="section-title mb-3">Gestión de usuarios</h5>
+
+<!-- Búsqueda y filtros -->
+<form method="get" class="mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <input type="text" name="q" value="{{ q }}"
+             class="form-control form-control-sm"
+             placeholder="Buscar por nombre, usuario o email...">
+    </div>
+    <div class="col-md-2">
+      <select name="rol" class="form-select form-select-sm">
+        <option value="">— Todos los roles —</option>
+        {% for val, label in roles %}
+          <option value="{{ val }}" {% if f_rol == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="estado" class="form-select form-select-sm">
+        <option value="">— Todos los estados —</option>
+        {% for val, label in estados %}
+          <option value="{{ val }}" {% if f_est == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-sm btn-danger">Filtrar</button>
+      <a href="{% url 'cuentas:dashboard_admin' %}" class="btn btn-sm btn-outline-secondary ms-1">Limpiar</a>
+    </div>
+  </div>
+</form>
+
+<!-- ── Tabs de rol ─────────────────────────────────────────────── -->
+<div class="tabs-indice mb-3" id="tabs-admin">
+  <button class="tab-btn activo" data-tab="todos">Todos</button>
+  <button class="tab-btn" data-tab="especialista">Especialista</button>
+  <button class="tab-btn" data-tab="paciente">Paciente</button>
+  <button class="tab-btn" data-tab="admin">Admin</button>
+</div>
+
+<!-- ── Índice A-Z ─────────────────────────────────────────────── -->
+<div class="az-bar mb-3" id="az-admin"></div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+    <table class="table table-hover mb-0" id="tabla-admin">
+      <thead>
+        <tr>
+          <th class="ps-3">Nombre</th>
+          <th>Usuario</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in page_obj %}
+        <tr class="item-usuario"
+            data-nombre="{{ u.get_full_name|default:u.username }}"
+            data-rol="{{ u.rol }}">
+          <td class="ps-3 align-middle">{{ u.get_full_name|default:"—" }}</td>
+          <td class="align-middle small text-muted">{{ u.username }}</td>
+          <td class="align-middle small">{{ u.email|default:"—" }}</td>
+          <td class="align-middle">
+            {% if u.rol == 'admin' %}
+              <span class="badge bg-dark">Admin</span>
+            {% elif u.rol == 'especialista' %}
+              <span class="badge bg-info text-dark">Especialista</span>
+            {% else %}
+              <span class="badge bg-secondary">Paciente</span>
+            {% endif %}
+          </td>
+          <td class="align-middle">
+            {% if u.estado == 'activo' %}
+              <span class="estado-activo">● Activo</span>
+            {% elif u.estado == 'pendiente' %}
+              <span class="estado-pendiente">● Pendiente</span>
+            {% elif u.estado == 'inactivo' %}
+              <span class="estado-inactivo">● Inactivo</span>
+            {% else %}
+              <span class="estado-rechazado">● {{ u.get_estado_display }}</span>
+            {% endif %}
+          </td>
+          <td class="align-middle">
+            <div class="d-flex flex-wrap gap-1">
+              <a href="{% url 'cuentas:editar_usuario_admin' u.pk %}"
+                 class="btn btn-sm btn-outline-danger">Editar</a>
+
+              {% if u.rol == 'paciente' %}
+                <a href="{% url 'cuentas:configurar_visibilidad_paciente' u.pk %}"
+                   class="btn btn-sm btn-outline-secondary">Permisos</a>
+              {% endif %}
+
+              {% if u.rol == 'especialista' and u.estado == 'pendiente' %}
+                <form method="post" action="{% url 'cuentas:aprobar_especialista' u.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-aprobar btn-sm">Aprobar</button>
+                </form>
+                <a href="{% url 'cuentas:rechazar_especialista' u.pk %}"
+                   class="btn btn-outline-secondary btn-sm">Rechazar</a>
+              {% elif u.estado == 'activo' %}
+                <form method="post" action="{% url 'cuentas:desactivar_usuario' u.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-warning btn-sm"
+                    onclick="return confirm('¿Desactivar la cuenta de {{ u.get_full_name|default:u.username }}?')">
+                    Desactivar
+                  </button>
+                </form>
+              {% elif u.estado == 'inactivo' or u.estado == 'rechazado' %}
+                <form method="post" action="{% url 'cuentas:reactivar_usuario' u.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-success btn-sm">Reactivar</button>
+                </form>
+              {% endif %}
+
+              {% if u.pk != user.pk %}
+              <form method="post" action="{% url 'cuentas:eliminar_usuario' u.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm"
+                  onclick="return confirm('¿Eliminar permanentemente la cuenta de {{ u.get_full_name|default:u.username }}?')">
+                  Eliminar
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-3">
+            No se encontraron usuarios con los filtros aplicados.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<div id="sin-resultados-admin" class="alert alert-light border mb-3" style="display:none;">
+  No hay usuarios que coincidan con los filtros seleccionados en esta página.
+</div>
+
+<script>
+(function () {
+  const tabla  = document.getElementById('tabla-admin');
+  const azBar  = document.getElementById('az-admin');
+  const sinRes = document.getElementById('sin-resultados-admin');
+  if (!tabla || !azBar) return;
+
+  let filtroTab   = 'todos';
+  let filtroLetra = 'todos';
+  const items = Array.from(tabla.querySelectorAll('tbody .item-usuario'));
+
+  // ── Contar y actualizar tabs ───────────────────────────────────
+  const counts = { especialista: 0, paciente: 0, admin: 0 };
+  items.forEach(el => {
+    const r = el.getAttribute('data-rol');
+    if (r in counts) counts[r]++;
+  });
+  document.querySelectorAll('#tabs-admin .tab-btn').forEach(btn => {
+    const tab = btn.getAttribute('data-tab');
+    const n   = tab === 'todos' ? items.length : (counts[tab] || 0);
+    btn.insertAdjacentHTML('beforeend', ` <span class="tab-count">(${n})</span>`);
+  });
+
+  // ── Construir índice A-Z ───────────────────────────────────────
+  const existentes = new Set(
+    items.map(el => (el.getAttribute('data-nombre') || '').trim().charAt(0).toUpperCase())
+         .filter(c => /[A-ZÁÉÍÓÚÑ]/.test(c))
+  );
+  const LETRAS = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('');
+  azBar.innerHTML =
+    '<button class="az-btn activo" data-letra="todos">Todos</button> ' +
+    LETRAS.map(l =>
+      `<button class="az-btn" data-letra="${l}"${existentes.has(l) ? '' : ' disabled'}>${l}</button>`
+    ).join(' ');
+
+  // ── Filtrar ────────────────────────────────────────────────────
+  function filtrar() {
+    let vis = 0;
+    items.forEach(el => {
+      const nombre = (el.getAttribute('data-nombre') || '').trim().toUpperCase();
+      const rol    = el.getAttribute('data-rol') || '';
+      const ok = (filtroLetra === 'todos' || nombre.charAt(0) === filtroLetra) &&
+                 (filtroTab   === 'todos' || rol === filtroTab);
+      el.style.display = ok ? '' : 'none';
+      if (ok) vis++;
+    });
+    sinRes.style.display = vis === 0 ? '' : 'none';
+  }
+
+  azBar.addEventListener('click', function (e) {
+    const btn = e.target.closest('.az-btn');
+    if (!btn || btn.disabled) return;
+    filtroLetra = btn.getAttribute('data-letra');
+    azBar.querySelectorAll('.az-btn').forEach(b => b.classList.toggle('activo', b === btn));
+    filtrar();
+  });
+
+  document.querySelectorAll('#tabs-admin .tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      filtroTab = this.getAttribute('data-tab');
+      document.querySelectorAll('#tabs-admin .tab-btn')
+               .forEach(b => b.classList.toggle('activo', b === this));
+      filtrar();
+    });
+  });
+})();
+</script>
+
+<!-- Paginación -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Usuarios">
+  <ul class="pagination pagination-sm justify-content-center">
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?q={{ q }}&rol={{ f_rol }}&estado={{ f_est }}&page={{ page_obj.previous_page_number }}">
+          &laquo;
+        </a>
+      </li>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <li class="page-item">
+          <a class="page-link" href="?q={{ q }}&rol={{ f_rol }}&estado={{ f_est }}&page={{ num }}">{{ num }}</a>
+        </li>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?q={{ q }}&rol={{ f_rol }}&estado={{ f_est }}&page={{ page_obj.next_page_number }}">
+          &raquo;
+        </a>
+      </li>
+    {% endif %}
+  </ul>
+  <p class="text-muted small text-center">
+    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    — {{ page_obj.paginator.count }} usuario{{ page_obj.paginator.count|pluralize }} en total
+  </p>
+</nav>
+{% endif %}
+
+{% endblock %}

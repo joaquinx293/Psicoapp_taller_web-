@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block titulo %}Revisar solicitud de baja — PsicoApp{% endblock %}
+
+{% block contenido %}
+<a href="{% url 'cuentas:dashboard_admin' %}" class="text-muted small">&larr; Volver al panel</a>
+
+<div class="mt-3 mb-4">
+  <h3 class="fw-bold">Solicitud de baja: especialista</h3>
+  {% if especialista %}
+    <p class="text-muted mb-0">
+      <strong>{{ especialista.get_full_name|default:especialista.username }}</strong>
+      — {{ especialista.email }}
+    </p>
+    <p class="text-muted small">Especialidad: {{ especialista.especialidad|default:"—" }}</p>
+  {% else %}
+    <p class="text-danger">El especialista ya no existe en el sistema.</p>
+  {% endif %}
+</div>
+
+{% if impacto %}
+<div class="card shadow-sm mb-4" style="border-top: 4px solid #C0392B;">
+  <div class="card-body">
+    <h5 class="fw-semibold mb-3">Impacto de la baja</h5>
+
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <div class="card border-0 bg-light h-100">
+          <div class="card-body text-center">
+            <div class="fs-2 fw-bold text-danger">{{ impacto.total_asignaciones }}</div>
+            <div class="text-muted small">asignación(es) activa(s) con pacientes</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card border-0 bg-light h-100">
+          <div class="card-body text-center">
+            <div class="fs-2 fw-bold text-danger">{{ impacto.total_cuestionarios }}</div>
+            <div class="text-muted small">cuestionario(s) creado(s)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if impacto.asignaciones_activas %}
+    <h6 class="fw-semibold mt-3">Pacientes con asignaciones activas:</h6>
+    <ul class="list-unstyled mb-0">
+      {% for a in impacto.asignaciones_activas %}
+      <li class="text-muted small py-1 border-bottom">
+        {{ a.paciente.get_full_name|default:a.paciente.username|default:"(anónimo)" }}
+        <span class="text-muted">— {{ a.cuestionario.nombre }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="alert alert-warning">
+  <strong>Nota:</strong> Al aprobar la baja, el especialista será desactivado lógicamente.
+  Sus cuestionarios y registros clínicos se conservarán en el sistema.
+  Los pacientes afectados quedarán sin especialista asignado.
+</div>
+
+<div class="d-flex gap-3 mt-3">
+  <form method="post" action="{% url 'cuentas:aprobar_baja_especialista' notif.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger"
+      onclick="return confirm('¿Confirmar la baja del/la especialista {{ especialista.get_full_name|default:especialista.username }}?')">
+      Aprobar baja
+    </button>
+  </form>
+  <form method="post" action="{% url 'cuentas:rechazar_baja_especialista' notif.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline-secondary">
+      Rechazar solicitud
+    </button>
+  </form>
+</div>
+
+{% endblock %}

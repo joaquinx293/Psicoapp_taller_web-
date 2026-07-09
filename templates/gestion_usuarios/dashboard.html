@@ -2,6 +2,21 @@
 {% block titulo %}Inicio - Especialista{% endblock %}
 {% block contenido %}
 <h2 class="mb-4">Bienvenido, {{ user.first_name }}</h2>
+
+{% if notificaciones %}
+<div class="mb-4">
+  {% for n in notificaciones %}
+  <div class="alert alert-warning d-flex align-items-start gap-2" role="alert">
+    <span>🔔</span>
+    <div>
+      <strong>Notificación</strong> — {{ n.fecha|date:"d/m/Y H:i" }}<br>
+      {{ n.mensaje }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <div class="row g-3">
   <div class="col-md-4">
     <div class="card shadow-sm">
@@ -30,5 +45,17 @@
       </div>
     </div>
   </div>
+</div>
+
+<hr class="mt-5">
+<div class="mt-3">
+  <h5 class="text-danger">Solicitar baja de mi cuenta</h5>
+  <p class="text-muted small">
+    Si deseas dar de baja tu cuenta, envía una solicitud al administrador.
+    Tus cuestionarios y registros clínicos se conservarán en el sistema.
+  </p>
+  <a href="{% url 'cuentas:solicitar_baja_especialista' %}" class="btn btn-outline-danger btn-sm">
+    Solicitar baja
+  </a>
 </div>
 {% endblock %}

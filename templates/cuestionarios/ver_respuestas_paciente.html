@@ -16,6 +16,70 @@
 </div>
 
 {% if respuestas %}
+  <!-- HU-036: Gráfico de evolución de puntajes -->
+  <div class="card shadow-sm mb-4" style="border-top: 4px solid #C0392B;">
+    <div class="card-body p-4">
+      <h5 class="card-title mb-3">Evolución de puntajes</h5>
+      <canvas id="graficoEvolucion" height="80"></canvas>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const dataEvolucion = JSON.parse('{{ evolucion_json|escapejs }}');
+      const datasets = [];
+      const colores = ['#C0392B', '#2980B9', '#27AE60', '#F39C12', '#8E44AD'];
+      let colorIndex = 0;
+
+      let todasLasFechas = new Set();
+      for (let test in dataEvolucion) {
+        dataEvolucion[test].fechas.forEach(f => todasLasFechas.add(f));
+      }
+      const labelsUnicos = Array.from(todasLasFechas);
+
+      for (let test in dataEvolucion) {
+        const dataAlineada = labelsUnicos.map(fecha => {
+          const idx = dataEvolucion[test].fechas.indexOf(fecha);
+          return idx !== -1 ? dataEvolucion[test].puntajes[idx] : null;
+        });
+        datasets.push({
+          label: test,
+          data: dataAlineada,
+          borderColor: colores[colorIndex % colores.length],
+          backgroundColor: colores[colorIndex % colores.length] + '33',
+          borderWidth: 3,
+          tension: 0.3,
+          spanGaps: true,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        });
+        colorIndex++;
+      }
+
+      const ctx = document.getElementById('graficoEvolucion').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: { labels: labelsUnicos, datasets: datasets },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} puntos`
+              }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Puntaje Total' } }
+          }
+        }
+      });
+    });
+  </script>
+
   {% for respuesta in respuestas %}
   <div class="card shadow-sm mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -37,6 +101,7 @@
       </div>
     </div>
     <div class="card-body p-0">
+      <div class="table-responsive">
       <table class="table table-sm mb-0">
         <thead class="table-light">
           <tr>
@@ -100,6 +165,7 @@
           </tr>
         </tfoot>
       </table>
+    </div>
     </div>
   </div>
   {% endfor %}

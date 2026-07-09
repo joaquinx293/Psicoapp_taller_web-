@@ -8,19 +8,35 @@
         <h4 class="mb-3">Crear cuestionario</h4>
         <form method="post">
           {% csrf_token %}
+
+          <!-- ID único del cuestionario -->
           <div class="mb-3">
-            <label class="form-label">Nombre del cuestionario</label>
+            <label class="form-label fw-semibold">
+              ID del cuestionario <span class="text-danger">*</span>
+            </label>
+            {{ form.id_cuestionario }}
+            <div class="form-text">
+              Identificador único que tú asignas (ej: ANS-001, DEP-2024).
+              No puede repetirse en ningún cuestionario del sistema.
+            </div>
+            {% if form.id_cuestionario.errors %}
+              <div class="text-danger small mt-1">{{ form.id_cuestionario.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nombre del cuestionario</label>
             {{ form.nombre }}
             {% if form.nombre.errors %}
-              <div class="text-danger small">{{ form.nombre.errors|join:", " }}</div>
+              <div class="text-danger small mt-1">{{ form.nombre.errors|join:", " }}</div>
             {% endif %}
           </div>
           <div class="mb-4">
-            <label class="form-label">Descripcion</label>
+            <label class="form-label">Descripción</label>
             {{ form.descripcion }}
           </div>
           <p class="text-muted small">
-            Cada pregunta tendra su propio tipo de respuesta (Likert, Si/No, etc.).
+            Cada pregunta tendrá su propio tipo de respuesta (Likert, Sí/No, etc.).
           </p>
           <button type="submit" class="btn btn-danger">Crear cuestionario</button>
           <a href="{% url 'cuestionarios:listado' %}" class="btn btn-link">Cancelar</a>

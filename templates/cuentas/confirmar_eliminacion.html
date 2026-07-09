@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block titulo %}Solicitar eliminación de cuenta — PsicoApp{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+
+    <div class="card border-danger shadow-sm">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Solicitar eliminación de cuenta</h5>
+      </div>
+      <div class="card-body">
+
+        <p class="text-muted mb-3">
+          Al enviar esta solicitud, un administrador revisará tu caso antes de proceder.
+          Mientras tanto, tu cuenta permanece activa.
+        </p>
+        <ul class="text-muted small mb-4">
+          <li>Tu solicitud será enviada al administrador para revisión.</li>
+          <li>Una vez aprobada, tu nombre, correo y datos personales serán eliminados.</li>
+          <li>Tus respuestas a cuestionarios quedarán anonimizadas para fines estadísticos.</li>
+          <li>Recibirás una notificación cuando la solicitud sea procesada.</li>
+        </ul>
+
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="alert alert-{{ msg.tags }} py-2">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Confirma tu contraseña actual</label>
+            <input type="password" name="password" class="form-control"
+                   placeholder="Contraseña actual" autofocus required>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-danger">
+              Enviar solicitud de eliminación de cuenta
+            </button>
+            <a href="{% url 'cuentas:perfil_paciente' %}" class="btn btn-outline-secondary">
+              Cancelar
+            </a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

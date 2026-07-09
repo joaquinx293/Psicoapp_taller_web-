@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block titulo %}Gestionar música ambiental — PsicoApp{% endblock %}
+
+{% block contenido %}
+<style>
+  .section-title { border-bottom: 2px solid #C0392B; padding-bottom: 6px; color: #922B21; }
+  .table thead   { background-color: #C0392B; color: white; }
+  .log-accion-subir       { color: #155724; }
+  .log-accion-eliminar    { color: #721c24; }
+  .log-accion-activar     { color: #0c5460; }
+  .log-accion-desactivar  { color: #856404; }
+  .log-accion-reordenar   { color: #383d41; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <a href="{% url 'cuentas:dashboard_admin' %}" class="text-muted small">&larr; Volver al panel</a>
+    <h2 class="mt-1 mb-0">Música ambiental</h2>
+  </div>
+</div>
+
+<!-- ── Subir nueva pista ─────────────────────────────────────────────────── -->
+<div class="card shadow-sm mb-5">
+  <div class="card-header fw-semibold">Agregar pista</div>
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label for="titulo" class="form-label">Título <span class="text-danger">*</span></label>
+          <input type="text" id="titulo" name="titulo" class="form-control"
+                 placeholder="Ej: Lluvia suave" maxlength="100" required>
+        </div>
+        <div class="col-md-5">
+          <label for="archivo" class="form-label">Archivo de audio <span class="text-danger">*</span></label>
+          <input type="file" id="archivo" name="archivo" class="form-control"
+                 accept=".mp3,.ogg,.wav,.flac,.aac,.m4a" required>
+          <div class="form-text">Formatos permitidos: MP3, OGG, WAV, FLAC, AAC, M4A &mdash; Máximo <strong>10 MB</strong></div>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-danger w-100">Subir pista</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Listado de pistas ──────────────────────────────────────────────────── -->
+<h5 class="section-title mb-3">
+  Pistas registradas
+  <span class="text-muted small fw-normal">({{ pistas|length }})</span>
+</h5>
+
+{% if pistas %}
+<div class="card shadow-sm mb-5">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+    <table class="table table-sm mb-0 align-middle">
+      <thead>
+        <tr>
+          <th class="ps-3" style="width:50px;">#</th>
+          <th>Título</th>
+          <th class="text-center" style="width:90px;">Estado</th>
+          <th class="text-center" style="width:120px;">Orden</th>
+          <th class="text-center" style="width:200px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pistas %}
+        <tr>
+          <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+          <td>
+            <span class="fw-semibold">{{ p.titulo }}</span>
+            <br>
+            <small class="text-muted">{{ p.archivo.name|slice:"7:" }}</small>
+          </td>
+          <td class="text-center">
+            {% if p.activa %}
+              <span class="badge bg-success">Activa</span>
+            {% else %}
+              <span class="badge bg-secondary">Inactiva</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <form method="post" action="{% url 'cuentas:subir_orden_pista' p.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-secondary py-0" title="Subir">&#9650;</button>
+            </form>
+            <form method="post" action="{% url 'cuentas:bajar_orden_pista' p.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-secondary py-0" title="Bajar">&#9660;</button>
+            </form>
+          </td>
+          <td class="text-center">
+            <form method="post" action="{% url 'cuentas:toggle_pista' p.pk %}" class="d-inline">
+              {% csrf_token %}
+              {% if p.activa %}
+                <button type="submit" class="btn btn-sm btn-outline-warning">Desactivar</button>
+              {% else %}
+                <button type="submit" class="btn btn-sm btn-outline-success">Activar</button>
+              {% endif %}
+            </form>
+            <form method="post" action="{% url 'cuentas:eliminar_pista' p.pk %}" class="d-inline"
+                  onsubmit="return confirm('¿Eliminar la pista «{{ p.titulo }}»? Esta acción no se puede deshacer.')">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info mb-5">
+  Aún no hay pistas registradas. Sube la primera pista usando el formulario de arriba.
+</div>
+{% endif %}
+
+<!-- ── Registro de cambios (log) ─────────────────────────────────────────── -->
+<h5 class="section-title mb-3">Registro de cambios</h5>
+
+{% if logs %}
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+    <table class="table table-sm mb-0 align-middle">
+      <thead>
+        <tr>
+          <th class="ps-3" style="width:160px;">Fecha</th>
+          <th style="width:140px;">Administrador</th>
+          <th style="width:130px;">Acción</th>
+          <th>Pista</th>
+          <th>Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td class="ps-3 text-muted small">{{ log.fecha|date:"d/m/Y H:i:s" }}</td>
+          <td class="small">{{ log.admin.username|default:"(eliminado)" }}</td>
+          <td class="small fw-semibold log-accion-{{ log.accion }}">
+            {{ log.get_accion_display }}
+          </td>
+          <td class="small">{{ log.pista_titulo }}</td>
+          <td class="text-muted small">{{ log.detalle|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+<p class="text-muted small mt-2">Se muestran los últimos 50 registros.</p>
+{% else %}
+<div class="alert alert-light border text-muted small">
+  No hay registros de cambios aún.
+</div>
+{% endif %}
+
+{% endblock %}
