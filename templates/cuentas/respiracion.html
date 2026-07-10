@@ -129,25 +129,25 @@ const TECNICAS = {
   '478': {
     totalCiclos: 4,
     fases: [
-      { nombre: 'Inhala...',  ticks: 40, escalaIni: 1.0, escalaFin: 1.8 },
-      { nombre: 'Mantén...',  ticks: 70, escalaIni: 1.8, escalaFin: 1.8 },
-      { nombre: 'Exhala...',  ticks: 80, escalaIni: 1.8, escalaFin: 1.0 },
+      { nombre: 'Inhala',  ticks: 40, escalaIni: 1.0, escalaFin: 1.8 },
+      { nombre: 'Mantén',  ticks: 70, escalaIni: 1.8, escalaFin: 1.8 },
+      { nombre: 'Exhala',  ticks: 80, escalaIni: 1.8, escalaFin: 1.0 },
     ]
   },
   'caja': {
     totalCiclos: 4,
     fases: [
-      { nombre: 'Inhala...',  ticks: 40, escalaIni: 1.0, escalaFin: 1.8 },
-      { nombre: 'Mantén...',  ticks: 40, escalaIni: 1.8, escalaFin: 1.8 },
-      { nombre: 'Exhala...',  ticks: 40, escalaIni: 1.8, escalaFin: 1.0 },
-      { nombre: 'Retén...',   ticks: 40, escalaIni: 1.0, escalaFin: 1.0 },
+      { nombre: 'Inhala',  ticks: 40, escalaIni: 1.0, escalaFin: 1.8 },
+      { nombre: 'Mantén',  ticks: 40, escalaIni: 1.8, escalaFin: 1.8 },
+      { nombre: 'Exhala',  ticks: 40, escalaIni: 1.8, escalaFin: 1.0 },
+      { nombre: 'Retén',   ticks: 40, escalaIni: 1.0, escalaFin: 1.0 },
     ]
   },
   'diafragmatica': {
     totalCiclos: 6,
     fases: [
-      { nombre: 'Inhala profundo...', ticks: 50, escalaIni: 1.0, escalaFin: 1.8 },
-      { nombre: 'Exhala lento...',    ticks: 50, escalaIni: 1.8, escalaFin: 1.0 },
+      { nombre: 'Inhala profundo', ticks: 50, escalaIni: 1.0, escalaFin: 1.8 },
+      { nombre: 'Exhala lento',    ticks: 50, escalaIni: 1.8, escalaFin: 1.0 },
     ]
   }
 };
@@ -157,6 +157,7 @@ let tecnicaActual  = TECNICAS['478'];
 let intervalo      = null;
 let tickEnCiclo    = 0;
 let cicloActual    = 1;
+let _ticksTotales  = 0;  // HU-038: contar ticks para calcular duración
 
 const circulo    = document.getElementById('circulo-respiracion');
 const texto      = document.getElementById('texto-instruccion');
@@ -229,6 +230,7 @@ function actualizarAnimacion() {
   timerFase.innerText = segsRestantes + ' s';
 
   tickEnCiclo++;
+  _ticksTotales++;
   if (tickEnCiclo >= durCiclo) {
     tickEnCiclo = 0;
     cicloActual++;
@@ -264,6 +266,7 @@ function detener() {
   intervalo       = null;
   tickEnCiclo     = 0;
   cicloActual     = 1;
+  _ticksTotales   = 0;
   circulo.style.transform       = 'scale(1)';
   circulo.style.backgroundColor = 'rgba(192,57,43,0.1)';
   circulo.style.borderColor     = '#C0392B';
@@ -278,6 +281,17 @@ function detener() {
 }
 
 function finalizarEjercicio() {
+  // HU-038: registrar duración de sesión completada antes de resetear ticks
+  const durSeg = Math.round(_ticksTotales * 0.1);
+  fetch('{% url "cuentas:log_bienestar_uso" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}',
+    },
+    body: JSON.stringify({ herramienta: 'respiracion', duracion_segundos: durSeg }),
+  }).catch(() => {});
+
   detener();
   texto.innerText               = '¡Completado!';
   circulo.style.backgroundColor = 'rgba(25,135,84,0.1)';

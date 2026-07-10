@@ -17,6 +17,8 @@ from .revisar_cuestionario import revisar_cuestionario                        # 
 from .cuestionarios_publicos import cuestionarios_publicos                    # especialista ve públicos
 from .reordenar_preguntas import reordenar_preguntas, guardar_orden           # reordenar via drag & drop
 
+from .api import buscar_pregunta, buscar_cuestionario                          # AJAX search
+
 from .historial_animo import historial_animo                                   # HU-023
 from .promedio_animo import ver_promedio_animo                                 # HU-034
 

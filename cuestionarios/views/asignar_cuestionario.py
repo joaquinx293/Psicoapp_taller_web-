@@ -1,4 +1,5 @@
 # Especialista asigna cuestionarios a un paciente
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -13,23 +14,6 @@ def asignar_cuestionario(request, paciente_pk):
         return redirect('cuentas:login')
 
     paciente = get_object_or_404(Usuario, pk=paciente_pk, rol=Usuario.ROL_PACIENTE)
-
-    # Solo cuestionarios aprobados/publicados o propios del especialista
-    cuestionarios_qs = (
-        Cuestionario.objects.filter(
-            estado__in=[Cuestionario.APROBADO, Cuestionario.PUBLICADO]
-        ) | Cuestionario.objects.filter(
-            especialista=request.user,
-            estado__in=[Cuestionario.BORRADOR, Cuestionario.APROBADO, Cuestionario.PUBLICADO]
-        )
-    ).distinct()
-
-    # Asignaciones activas: {cuestionario_id: intentos_maximos}
-    asignaciones_actuales = {
-        a.cuestionario_id: a.intentos_maximos
-        for a in AsignacionCuestionario.objects.filter(paciente=paciente, activa=True)
-    }
-    asignados_ids = set(asignaciones_actuales.keys())
 
     if request.method == 'POST':
         seleccionados = request.POST.getlist('cuestionarios')
@@ -55,21 +39,29 @@ def asignar_cuestionario(request, paciente_pk):
                 defaults={'activa': True, 'intentos_maximos': intentos},
             )
 
-        messages.success(request, f'Cuestionarios de {paciente.first_name or paciente.username} actualizados.')
+        messages.success(
+            request,
+            f'Cuestionarios de {paciente.first_name or paciente.username} actualizados.'
+        )
         return redirect('gestion_usuarios:listado_pacientes')
 
-    # Construir lista con datos pre-cargados para el template
-    cuestionarios_con_datos = [
+    # GET: solo carga asignaciones activas actuales (no todo el catálogo)
+    asignaciones = AsignacionCuestionario.objects.filter(
+        especialista=request.user,
+        paciente=paciente,
+        activa=True,
+    ).select_related('cuestionario').order_by('cuestionario__nombre')
+
+    asignados_json = json.dumps([
         {
-            'cuestionario': c,
-            'asignado':     c.pk in asignados_ids,
-            'intentos':     asignaciones_actuales.get(c.pk, 1),
+            'id': a.cuestionario_id,
+            'nombre': a.cuestionario.nombre,
+            'intentos': a.intentos_maximos,
         }
-        for c in cuestionarios_qs
-    ]
+        for a in asignaciones
+    ], ensure_ascii=False)
 
     return render(request, 'cuestionarios/asignar_cuestionario.html', {
-        'paciente':                 paciente,
-        'cuestionarios_con_datos':  cuestionarios_con_datos,
-        'asignados_ids':            asignados_ids,
+        'paciente':      paciente,
+        'asignados_json': asignados_json,
     })

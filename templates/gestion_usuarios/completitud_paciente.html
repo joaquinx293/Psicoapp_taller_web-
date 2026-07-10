@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block titulo %}Completitud de cuestionarios — {{ paciente.get_full_name|default:paciente.username }}{% endblock %}
+
+{% block contenido %}
+<div class="container-fluid py-4 px-3">
+
+  {# ── Encabezado ──────────────────────────────────────────────────────────── #}
+  <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-4">
+    <div>
+      <a href="{% url 'gestion_usuarios:listado_pacientes' %}"
+         class="text-muted small text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i>Mis pacientes
+      </a>
+      <h2 class="fw-bold mb-0 mt-1">
+        <i class="bi bi-clipboard2-check me-2 text-danger"></i>
+        Completitud de cuestionarios
+      </h2>
+      <p class="text-muted mb-0">
+        Paciente: <strong>{{ paciente.get_full_name|default:paciente.username }}</strong>
+        &nbsp;·&nbsp; {{ paciente.email }}
+      </p>
+    </div>
+  </div>
+
+  {# ── Filtro por periodo ───────────────────────────────────────────────────── #}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+          <label class="form-label small fw-semibold mb-1">Desde</label>
+          <input type="date" name="desde" class="form-control form-control-sm"
+                 value="{{ fecha_desde }}">
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label small fw-semibold mb-1">Hasta</label>
+          <input type="date" name="hasta" class="form-control form-control-sm"
+                 value="{{ fecha_hasta }}">
+        </div>
+        <div class="col-12 col-md-4">
+          <button type="submit" class="btn btn-danger btn-sm w-100">
+            <i class="bi bi-funnel me-1"></i>Aplicar filtro
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {# ── Tarjetas resumen ─────────────────────────────────────────────────────── #}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="fs-2 fw-bold text-danger">{{ total_asignados }}</div>
+        <div class="text-muted small">Cuestionarios asignados</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="fs-2 fw-bold text-success">{{ total_con_respuestas }}</div>
+        <div class="text-muted small">Con al menos 1 respuesta</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="fs-2 fw-bold text-danger">{{ total_completados_periodo }}</div>
+        <div class="text-muted small">Completados en el periodo</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100"
+           title="Cuestionarios con al menos 1 respuesta / total asignados">
+        <div class="fs-2 fw-bold
+          {% if tasa_global >= 75 %}text-success
+          {% elif tasa_global >= 40 %}text-warning
+          {% else %}text-danger{% endif %}">
+          {{ tasa_global }}%
+        </div>
+        <div class="text-muted small">Tasa global (histórico)</div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Tabla de cuestionarios ───────────────────────────────────────────────── #}
+  <h5 class="fw-semibold mb-3">
+    <i class="bi bi-table me-1 text-danger"></i>Detalle por cuestionario
+  </h5>
+
+  {% if filas %}
+    <div class="card border-0 shadow-sm mb-5">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">Cuestionario</th>
+              <th class="text-center">Intentos<br><small class="fw-normal text-muted">permitidos</small></th>
+              <th class="text-center">Completados<br><small class="fw-normal text-muted">en el periodo</small></th>
+              <th class="text-center">Completados<br><small class="fw-normal text-muted">histórico</small></th>
+              <th class="text-center">Tasa<br><small class="fw-normal text-muted">del periodo</small></th>
+              <th class="text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in filas %}
+              <tr>
+                <td class="ps-3">
+                  <span class="fw-semibold">{{ f.cuestionario.nombre }}</span>
+                  {% if f.cuestionario.id_cuestionario %}
+                    <br><small class="text-muted">{{ f.cuestionario.id_cuestionario }}</small>
+                  {% endif %}
+                  <br>
+                  <small class="text-muted">
+                    Asignado: {{ f.fecha_asignacion|date:"d/m/Y" }}
+                  </small>
+                </td>
+                <td class="text-center">
+                  {% if f.max_intentos == 0 %}
+                    <span class="text-muted">∞</span>
+                  {% else %}
+                    {{ f.max_intentos }}
+                  {% endif %}
+                </td>
+                <td class="text-center fw-semibold">{{ f.completados_periodo }}</td>
+                <td class="text-center">{{ f.completados_all }}</td>
+                <td class="text-center">
+                  {% if f.tasa is not None %}
+                    <div class="d-flex align-items-center justify-content-center gap-2">
+                      <div style="width:60px; height:8px; background:#e9ecef; border-radius:4px; overflow:hidden;">
+                        <div style="width:{{ f.tasa }}%; height:100%; background:
+                          {% if f.tasa >= 75 %}#198754{% elif f.tasa >= 40 %}#ffc107{% else %}#dc3545{% endif %};
+                          border-radius:4px;"></div>
+                      </div>
+                      <span class="fw-semibold {% if f.tasa >= 75 %}text-success{% elif f.tasa >= 40 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ f.tasa }}%
+                      </span>
+                    </div>
+                  {% else %}
+                    <span class="text-muted small">{{ f.tasa_display }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if f.completados_all == 0 %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2">
+                      Sin completar
+                    </span>
+                  {% elif f.tasa is not None and f.tasa < 100 and f.max_intentos > 0 %}
+                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2">
+                      Parcial
+                    </span>
+                  {% else %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">
+                      OK
+                    </span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-light border mb-5">
+      Este paciente no tiene cuestionarios asignados.
+    </div>
+  {% endif %}
+
+  {# ── Preguntas de cuestionarios nunca completados ─────────────────────────── #}
+  {% if preguntas_abandonadas %}
+    <h5 class="fw-semibold mb-3">
+      <i class="bi bi-exclamation-triangle me-1 text-warning"></i>
+      Preguntas de cuestionarios nunca completados
+      <span class="badge bg-warning text-dark ms-1">{{ preguntas_abandonadas|length }} cuestionario{{ preguntas_abandonadas|length|pluralize }}</span>
+    </h5>
+    <p class="text-muted small mb-3">
+      Estos cuestionarios fueron asignados pero el paciente no ha completado ningún intento.
+      Las preguntas listadas aquí son las que presentan mayor riesgo de abandono.
+    </p>
+
+    <div class="row g-3 mb-4">
+      {% for grupo in preguntas_abandonadas %}
+        <div class="col-12 col-lg-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-danger-subtle border-0 py-2">
+              <span class="fw-semibold text-danger">
+                <i class="bi bi-clipboard-x me-1"></i>
+                {{ grupo.cuestionario.nombre }}
+              </span>
+              {% if grupo.cuestionario.id_cuestionario %}
+                <small class="text-muted ms-1">({{ grupo.cuestionario.id_cuestionario }})</small>
+              {% endif %}
+            </div>
+            <div class="card-body p-0">
+              <ol class="list-group list-group-flush list-group-numbered">
+                {% for pregunta in grupo.preguntas %}
+                  <li class="list-group-item list-group-item-action d-flex justify-content-between align-items-start px-3 py-2">
+                    <div class="ms-2 me-auto">
+                      <span class="small">{{ pregunta.texto }}</span>
+                    </div>
+                    <span class="badge bg-secondary-subtle text-secondary ms-2 small">
+                      {{ pregunta.get_escala_display }}
+                    </span>
+                  </li>
+                {% endfor %}
+              </ol>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% elif filas %}
+    <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
+      <i class="bi bi-check-circle-fill fs-5"></i>
+      <span>El paciente ha completado al menos un intento de todos sus cuestionarios asignados.</span>
+    </div>
+  {% endif %}
+
+  <p class="text-muted small mt-2">
+    <i class="bi bi-info-circle me-1"></i>
+    "Tasa del periodo" = completaciones en el rango de fechas seleccionado / intentos máximos permitidos.
+    Para cuestionarios sin límite de intentos no se calcula tasa. "Tasa global" = cuestionarios con al menos 1 respuesta histórica / total asignados.
+  </p>
+
+</div>
+{% endblock contenido %}

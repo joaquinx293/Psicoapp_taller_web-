@@ -37,3 +37,10 @@ from .musica import (                               # HU-029
     subir_orden_pista,
     bajar_orden_pista,
 )
+from .log_sesiones import log_sesiones             # HU-037
+from .log_bienestar import log_bienestar, log_bienestar_uso  # HU-038
+from .gestionar_especialidades import (            # admin: categorías de especialidad
+    gestionar_especialidades,
+    editar_especialidad,
+    eliminar_especialidad,
+)

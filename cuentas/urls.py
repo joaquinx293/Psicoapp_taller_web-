@@ -84,6 +84,18 @@ urlpatterns = [
     # HU-028: Ejercicio de respiración guiada
     path('bienestar/respiracion/', views.respiracion_guiada, name='respiracion_guiada'),
 
+    # Admin: gestión de especialidades
+    path('admin-dashboard/especialidades/', views.gestionar_especialidades, name='gestionar_especialidades'),
+    path('admin-dashboard/especialidades/<int:pk>/editar/', views.editar_especialidad, name='editar_especialidad'),
+    path('admin-dashboard/especialidades/<int:pk>/eliminar/', views.eliminar_especialidad, name='eliminar_especialidad'),
+
+    # HU-037: Log de inicios de sesión (admin)
+    path('admin-dashboard/log-sesiones/', views.log_sesiones, name='log_sesiones'),
+
+    # HU-038: Frecuencia de uso de herramientas de bienestar
+    path('admin-dashboard/bienestar/', views.log_bienestar, name='log_bienestar'),
+    path('bienestar/log-uso/', views.log_bienestar_uso, name='log_bienestar_uso'),
+
     # HU-022: Registrar estado de ánimo diario
     path('animo/', views.registrar_animo, name='registrar_animo'),
 

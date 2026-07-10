@@ -2,7 +2,7 @@
 {% block titulo %}Precargar cuestionarios{% endblock %}
 {% block contenido %}
 
-<a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="text-muted small">&larr; Volver a mis pacientes</a>
+<a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">← Volver</a>
 
 <h3 class="mt-2 mb-1">Cuestionarios para {{ invitacion.nombre_paciente }}</h3>
 <div class="alert alert-warning d-flex align-items-center gap-2 mt-2 mb-4">

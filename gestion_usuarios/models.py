@@ -30,7 +30,7 @@ class InvitacionPaciente(models.Model):
     nombre_paciente = models.CharField(max_length=150)
     correo_paciente = models.EmailField()
 
-    # PIN de 6 dígitos, válido por 24 horas
+    # PIN de 6 dígitos valido para  24 horas 
     pin = models.CharField(max_length=6, editable=False, default=generar_pin)
 
     estado = models.CharField(max_length=20, choices=ESTADOS, default=PENDIENTE)

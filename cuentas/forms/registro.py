@@ -29,7 +29,6 @@ class RegistroEspecialistaForm(UserCreationForm):
         empty_label='Selecciona una especialidad',
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    # HU-002: aceptación de términos y condiciones
     acepta_terminos = forms.BooleanField(
         label='Acepto los terminos y condiciones',
         required=True

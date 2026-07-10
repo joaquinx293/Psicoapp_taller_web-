@@ -11,7 +11,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # 1. especialista pasa a ser nullable (plantillas del sistema)
         migrations.AlterField(
             model_name='cuestionario',
             name='especialista',
@@ -23,7 +22,7 @@ class Migration(migrations.Migration):
                 to=settings.AUTH_USER_MODEL,
             ),
         ),
-        # 2. nuevo campo invertir en Pregunta (para PSS-10)
+        # 2. nuevo campo invertir en Pregunta para pss-10
         migrations.AddField(
             model_name='pregunta',
             name='invertir',

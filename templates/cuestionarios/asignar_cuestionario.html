@@ -5,120 +5,216 @@
 <a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="text-muted small">&larr; Volver a mis pacientes</a>
 
 <h3 class="mt-2 mb-1">Cuestionarios para {{ paciente.first_name|default:paciente.username }}</h3>
-<p class="text-muted mb-1">
-  Marca los cuestionarios que quieres asignar y define cuántos intentos tiene el paciente para cada uno.
+<p class="text-muted mb-4">
+  Buscá cuestionarios para agregar y definí cuántos intentos tiene el paciente para cada uno.
+  <span class="text-muted small d-block">(0 intentos = ilimitado)</span>
 </p>
-<p class="text-muted small mb-3">Intentos = 0 significa que el paciente puede responder de forma ilimitada.</p>
 
-<!-- Filtro de búsqueda -->
-<div class="mb-4">
-  <input type="text" id="filtro-cuestionarios" class="form-control"
-         placeholder="Buscar cuestionario por nombre o descripción..."
-         autocomplete="off">
-  <small id="contador-cuestionarios" class="text-muted mt-1 d-block"></small>
+<!-- ── Buscador AJAX ───────────────────────────────────────────────── -->
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body">
+    <label class="form-label fw-semibold small mb-1">Agregar cuestionario</label>
+    <div class="input-group input-group-sm">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" id="buscar-cuest"
+             class="form-control"
+             placeholder="Escribí el nombre del cuestionario..."
+             autocomplete="off">
+    </div>
+    <div id="buscar-resultados"
+         class="list-group mt-1 shadow-sm"
+         style="display:none; max-height:260px; overflow-y:auto; position:relative; z-index:10;">
+    </div>
+    <p id="buscar-sin-res" class="text-muted small mt-1" style="display:none;">
+      No se encontraron cuestionarios.
+    </p>
+  </div>
 </div>
 
-<form method="post">
+<!-- ── Lista de asignados ─────────────────────────────────────────── -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent border-0 pt-3 pb-0 d-flex align-items-center gap-2">
+    <span class="fw-semibold small">Asignados</span>
+    <span id="contador-asig" class="badge bg-secondary">0</span>
+  </div>
+  <div class="card-body">
+    <div id="lista-asig"></div>
+    <p id="sin-asig" class="text-muted small mb-0">
+      Ningún cuestionario asignado. Buscá uno arriba para agregar.
+    </p>
+  </div>
+</div>
+
+<!-- ── Formulario (inputs construidos por JS) ─────────────────────── -->
+<form method="post" id="form-asignar">
   {% csrf_token %}
-  <div class="row g-3 mb-4" id="lista-cuestionarios">
-
-    {% for item in cuestionarios_con_datos %}
-    {% with c=item.cuestionario asignado=item.asignado intentos=item.intentos %}
-    <div class="col-md-6 cuestionario-item"
-         data-texto="{{ c.nombre }} {{ c.descripcion|default:'' }}">
-      <div class="card shadow-sm {% if asignado %}border-danger{% endif %}">
-        <div class="card-body">
-
-          <!-- Checkbox + nombre -->
-          <div class="d-flex align-items-start gap-3">
-            <input class="form-check-input mt-1 flex-shrink-0 chk-cuestionario"
-                   type="checkbox"
-                   name="cuestionarios" value="{{ c.pk }}" id="c{{ c.pk }}"
-                   {% if asignado %}checked{% endif %}>
-            <label class="form-check-label w-100" for="c{{ c.pk }}" style="cursor:pointer">
-              <div class="d-flex justify-content-between align-items-start">
-                <span class="fw-semibold">{{ c.nombre }}</span>
-                {% if c.estado == 'aprobado' %}
-                  <span class="badge bg-success ms-1 flex-shrink-0">Aprobado</span>
-                {% elif c.estado == 'publicado' %}
-                  <span class="badge bg-primary ms-1 flex-shrink-0">Publicado</span>
-                {% else %}
-                  <span class="badge bg-secondary ms-1 flex-shrink-0">Borrador</span>
-                {% endif %}
-              </div>
-              <p class="text-muted small mb-0 mt-1">
-                {{ c.descripcion|default:"Sin descripción" }} · {{ c.cantidad_preguntas_activas }} pregunta(s)
-              </p>
-            </label>
-          </div>
-
-          <!-- Campo intentos (visible solo cuando está marcado) -->
-          <div class="intentos-campo mt-2 pt-2 border-top {% if not asignado %}d-none{% endif %}"
-               id="intentos-wrap-{{ c.pk }}">
-            <label for="intentos_{{ c.pk }}" class="form-label small mb-1">
-              Intentos permitidos
-              <span class="text-muted">(0 = ilimitado)</span>
-            </label>
-            <input type="number" name="intentos_{{ c.pk }}" id="intentos_{{ c.pk }}"
-                   class="form-control form-control-sm" style="max-width:100px;"
-                   min="0" max="99" value="{{ intentos }}">
-          </div>
-
-        </div>
-      </div>
-    </div>
-    {% endwith %}
-    {% empty %}
-    <div class="col-12">
-      <div class="alert alert-info">No tienes cuestionarios disponibles para asignar.</div>
-    </div>
-    {% endfor %}
-
-  </div>
-
-  <div id="sin-resultados" class="alert alert-light border mb-4" style="display:none;">
-    No se encontraron cuestionarios que coincidan con la búsqueda.
-  </div>
-
+  <div id="form-inputs"></div>
   <button type="submit" class="btn btn-danger">Guardar asignación</button>
   <a href="{% url 'gestion_usuarios:listado_pacientes' %}" class="btn btn-link">Cancelar</a>
 </form>
 
 <script>
 (function () {
-  // ── Mostrar/ocultar campo intentos al marcar/desmarcar ────────
-  document.querySelectorAll('.chk-cuestionario').forEach(function (chk) {
-    chk.addEventListener('change', function () {
-      const wrap = document.getElementById('intentos-wrap-' + this.value);
-      if (wrap) wrap.classList.toggle('d-none', !this.checked);
-      if (!this.checked) {
-        const inp = document.getElementById('intentos_' + this.value);
-        if (inp) inp.value = 1;
-      }
-    });
+  'use strict';
+
+  var API       = '{% url "cuestionarios:buscar_cuestionario" %}?q=';
+  var buscarEl  = document.getElementById('buscar-cuest');
+  var resEl     = document.getElementById('buscar-resultados');
+  var sinResEl  = document.getElementById('buscar-sin-res');
+  var listaEl   = document.getElementById('lista-asig');
+  var sinAsigEl = document.getElementById('sin-asig');
+  var contEl    = document.getElementById('contador-asig');
+  var formEl    = document.getElementById('form-inputs');
+
+  // Estado: mapa id → {id, nombre, intentos}
+  var asignados = {};
+
+  // Pre-cargar desde servidor (solo los ya asignados — sin cargar todo el catálogo)
+  var INICIAL = {{ asignados_json|safe }};
+  INICIAL.forEach(function (a) {
+    asignados[a.id] = { id: a.id, nombre: a.nombre, intentos: a.intentos };
   });
 
-  // ── Filtro de búsqueda ────────────────────────────────────────
-  const input    = document.getElementById('filtro-cuestionarios');
-  const items    = document.querySelectorAll('.cuestionario-item');
-  const sinRes   = document.getElementById('sin-resultados');
-  const contador = document.getElementById('contador-cuestionarios');
-  const total    = items.length;
+  /* ── Renderiza la lista de asignados y reconstruye los inputs ocultos ── */
+  function renderLista() {
+    listaEl.innerHTML = '';
+    formEl.innerHTML  = '';
+    var ids = Object.keys(asignados);
+    contEl.textContent = ids.length;
+    sinAsigEl.style.display = ids.length === 0 ? '' : 'none';
 
-  function actualizar() {
-    const q = input.value.trim().toLowerCase();
-    let visibles = 0;
-    items.forEach(function (item) {
-      const texto = item.getAttribute('data-texto').toLowerCase();
-      const visible = !q || texto.includes(q);
-      item.style.display = visible ? '' : 'none';
-      if (visible) visibles++;
+    ids.forEach(function (id) {
+      var item = asignados[id];
+
+      // Hidden: nombre del cuestionario para el POST
+      var hc = document.createElement('input');
+      hc.type  = 'hidden';
+      hc.name  = 'cuestionarios';
+      hc.value = item.id;
+      formEl.appendChild(hc);
+
+      // Hidden: intentos para el POST
+      var hi = document.createElement('input');
+      hi.type  = 'hidden';
+      hi.name  = 'intentos_' + item.id;
+      hi.value = item.intentos;
+      hi.id    = 'hi_' + item.id;
+      formEl.appendChild(hi);
+
+      // Tarjeta visible
+      var card = document.createElement('div');
+      card.className = 'd-flex align-items-center justify-content-between border rounded px-3 py-2 mb-2 bg-white gap-3';
+      card.innerHTML =
+        '<div class="flex-grow-1">' +
+          '<div class="fw-semibold small">' + item.nombre + '</div>' +
+          '<div class="d-flex align-items-center gap-2 mt-1">' +
+            '<label class="text-muted mb-0" style="font-size:.75rem;" for="iv_' + item.id + '">Intentos:</label>' +
+            '<input type="number" id="iv_' + item.id + '"' +
+                   ' class="form-control form-control-sm py-0" style="width:70px;"' +
+                   ' min="0" max="99" value="' + item.intentos + '">' +
+            '<span class="text-muted" style="font-size:.72rem;">(0 = ilimitado)</span>' +
+          '</div>' +
+        '</div>' +
+        '<button type="button" class="btn btn-sm btn-outline-danger btn-quitar flex-shrink-0"' +
+                ' data-id="' + item.id + '">Quitar</button>';
+      listaEl.appendChild(card);
+
+      // Sincronizar input visible → hidden
+      card.querySelector('#iv_' + item.id).addEventListener('input', function () {
+        var val = Math.max(0, parseInt(this.value) || 0);
+        asignados[item.id].intentos = val;
+        document.getElementById('hi_' + item.id).value = val;
+      });
+
+      // Quitar
+      card.querySelector('.btn-quitar').addEventListener('click', function () {
+        delete asignados[this.getAttribute('data-id')];
+        renderLista();
+      });
     });
-    sinRes.style.display = (visibles === 0 && total > 0) ? '' : 'none';
-    contador.textContent = q ? `Mostrando ${visibles} de ${total} cuestionarios` : '';
   }
 
-  input.addEventListener('input', actualizar);
+  /* ── Agrega un cuestionario a la lista ── */
+  function agregar(c) {
+    if (asignados[c.id]) return;
+    asignados[c.id] = { id: c.id, nombre: c.nombre, intentos: 1 };
+    renderLista();
+    buscarEl.value = '';
+    resEl.style.display = 'none';
+    sinResEl.style.display = 'none';
+  }
+
+  /* ── Búsqueda AJAX con debounce ── */
+  var timer = null;
+
+  function buscar(q) {
+    if (q.length < 1) {
+      resEl.style.display = 'none';
+      sinResEl.style.display = 'none';
+      return;
+    }
+    fetch(API + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        resEl.innerHTML = '';
+        if (!data.results || data.results.length === 0) {
+          resEl.style.display = 'none';
+          sinResEl.style.display = '';
+          return;
+        }
+        sinResEl.style.display = 'none';
+        data.results.forEach(function (c) {
+          var yaAsig = !!asignados[c.id];
+          var badgeEstado = c.estado === 'aprobado'
+            ? '<span class="badge bg-success ms-1">Aprobado</span>'
+            : c.estado === 'publicado'
+            ? '<span class="badge bg-primary ms-1">Publicado</span>'
+            : '<span class="badge bg-secondary ms-1">Borrador</span>';
+
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'list-group-item list-group-item-action py-2 small' +
+                          (yaAsig ? ' disabled' : '');
+          btn.disabled = yaAsig;
+          btn.innerHTML =
+            '<div class="d-flex justify-content-between align-items-start gap-2">' +
+              '<div>' +
+                '<span class="fw-semibold">' + c.nombre + '</span>' + badgeEstado +
+                '<div class="text-muted" style="font-size:.73rem;">' +
+                  c.n_preguntas + ' pregunta(s)' +
+                  (c.descripcion ? ' · ' + c.descripcion : '') +
+                '</div>' +
+              '</div>' +
+              (yaAsig
+                ? '<span class="badge bg-light text-muted border flex-shrink-0">Ya asignado</span>'
+                : '<span class="badge bg-danger flex-shrink-0">+ Agregar</span>') +
+            '</div>';
+
+          if (!yaAsig) {
+            btn.addEventListener('click', function () { agregar(c); });
+          }
+          resEl.appendChild(btn);
+        });
+        resEl.style.display = '';
+      })
+      .catch(function () {});
+  }
+
+  buscarEl.addEventListener('input', function () {
+    clearTimeout(timer);
+    var q = this.value.trim();
+    timer = setTimeout(function () { buscar(q); }, 300);
+  });
+
+  // Cerrar dropdown al hacer clic afuera
+  document.addEventListener('click', function (e) {
+    if (!resEl.contains(e.target) && e.target !== buscarEl) {
+      resEl.style.display = 'none';
+    }
+  });
+
+  // Render inicial
+  renderLista();
 })();
 </script>
 

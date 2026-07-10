@@ -105,7 +105,7 @@
   <div class="card-header fw-semibold d-flex align-items-center gap-2">
      Recordatorio por correo del paciente
     {% if recordatorio and recordatorio.activo %}
-      <span class="badge bg-success ms-auto">Activo — {{ recordatorio.hora|time:"H:i" }}</span>
+      <span class="badge bg-danger ms-auto">Activo — {{ recordatorio.hora|time:"H:i" }}</span>
     {% elif recordatorio and not recordatorio.activo %}
       <span class="badge bg-secondary ms-auto">Inactivo</span>
     {% else %}

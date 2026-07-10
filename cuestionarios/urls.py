@@ -40,4 +40,8 @@ urlpatterns = [
     # Cambio 2: publicar y archivar cuestionario (especialista)
     path('<int:pk>/publicar/', views.publicar_cuestionario, name='publicar_cuestionario'),
     path('<int:pk>/archivar/', views.archivar_cuestionario, name='archivar_cuestionario'),
+
+    # AJAX: búsqueda escalable
+    path('api/buscar-pregunta/<int:cuestionario_pk>/', views.buscar_pregunta, name='buscar_pregunta'),
+    path('api/buscar-cuestionario/', views.buscar_cuestionario, name='buscar_cuestionario'),
 ]

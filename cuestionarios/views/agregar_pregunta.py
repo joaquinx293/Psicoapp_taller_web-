@@ -37,17 +37,15 @@ def detalle_cuestionario(request, pk):
     else:
         form = PreguntaForm()
 
-    # Preguntas de otros cuestionarios del mismo especialista para importar
-    preguntas_importables = Pregunta.objects.filter(
+    # ¿El especialista tiene otros cuestionarios con preguntas? (para mostrar/ocultar sección importar)
+    tiene_otros = Pregunta.objects.filter(
         cuestionario__especialista=request.user,
         activa=True,
-    ).exclude(
-        cuestionario=cuestionario
-    ).select_related('cuestionario').order_by('cuestionario__nombre', 'orden')
+    ).exclude(cuestionario=cuestionario).exists()
 
     return render(request, 'cuestionarios/detalle.html', {
         'cuestionario': cuestionario,
         'preguntas': preguntas,
         'form': form,
-        'preguntas_importables': preguntas_importables,
+        'tiene_otros': tiene_otros,
     })

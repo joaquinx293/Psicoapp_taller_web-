@@ -61,6 +61,7 @@ class Cuestionario(models.Model):
 
     class Meta:
         ordering = ['-fecha_creacion']
+        unique_together = [('especialista', 'nombre')]
 
     def cantidad_preguntas_activas(self):
         return self.preguntas.filter(activa=True).count()
@@ -152,7 +153,7 @@ class AsignacionCuestionario(models.Model):
     """El especialista elige qué cuestionarios ve cada paciente."""
     especialista = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='asignaciones_dadas'
     )
     paciente = models.ForeignKey(
@@ -249,7 +250,7 @@ class AsignacionPendiente(models.Model):
     """Cuestionarios pre-asignados a un paciente que aún no se ha registrado."""
     especialista = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='asignaciones_pendientes_dadas'
     )
     invitacion = models.ForeignKey(

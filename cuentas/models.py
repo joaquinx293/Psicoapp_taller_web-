@@ -124,7 +124,7 @@ class PreguntaDiaria(models.Model):
     )
     especialista = models.ForeignKey(
         'Usuario',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='preguntas_diarias_configuradas',
         limit_choices_to={'rol': 'especialista'},
     )
@@ -203,7 +203,7 @@ class RecordatorioEmail(models.Model):
 
 class PistaMusical(models.Model):
     """HU-029: Pistas de música ambiental gestionadas por el administrador."""
-    titulo  = models.CharField(max_length=100, verbose_name='Título')
+    titulo  = models.CharField(max_length=100, unique=True, verbose_name='Título')
     archivo = models.FileField(upload_to='musica/', verbose_name='Archivo de audio')
     orden   = models.PositiveIntegerField(default=0, verbose_name='Orden')
     activa  = models.BooleanField(default=True, verbose_name='Activa')
@@ -220,7 +220,7 @@ class PistaMusical(models.Model):
 
 class DatoDelDia(models.Model):
     """HU-032: Dato educativo diario gestionado por el administrador."""
-    texto            = models.TextField(verbose_name='Texto')
+    texto            = models.TextField(unique=True, verbose_name='Texto')
     fuente           = models.CharField(max_length=200, verbose_name='Fuente')
     activo           = models.BooleanField(default=True, verbose_name='Activo')
     fecha_creacion   = models.DateTimeField(auto_now_add=True)
@@ -356,6 +356,64 @@ class PreferenciasVisibilidad(models.Model):
 
     def __str__(self):
         return f"Visibilidad de {self.paciente.username}"
+
+
+class LogInicioSesion(models.Model):
+    """HU-037: Registro automático de cada inicio de sesión exitoso."""
+    usuario = models.ForeignKey(
+        'Usuario',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='logs_sesion',
+    )
+    fecha = models.DateTimeField(auto_now_add=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-fecha']
+        verbose_name = 'Log de inicio de sesión'
+        verbose_name_plural = 'Logs de inicio de sesión'
+
+    def __str__(self):
+        nombre = self.usuario.username if self.usuario else '(eliminado)'
+        return f"{nombre} – {self.fecha:%d/%m/%Y %H:%M}"
+
+
+class LogBienestar(models.Model):
+    """HU-038: Registro de acceso y uso de herramientas de bienestar."""
+
+    RESPIRACION = 'respiracion'
+    MUSICA      = 'musica'
+    DATO_DIA    = 'dato_dia'
+
+    HERRAMIENTAS = [
+        (RESPIRACION, 'Respiración guiada'),
+        (MUSICA,      'Música ambiental'),
+        (DATO_DIA,    'Dato del día / Favoritos'),
+    ]
+
+    usuario = models.ForeignKey(
+        'Usuario',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='logs_bienestar',
+    )
+    herramienta       = models.CharField(max_length=20, choices=HERRAMIENTAS)
+    fecha             = models.DateTimeField(auto_now_add=True)
+    duracion_segundos = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text='Solo para respiración: segundos de sesión completada.',
+    )
+
+    class Meta:
+        ordering = ['-fecha']
+        verbose_name = 'Log de bienestar'
+        verbose_name_plural = 'Logs de bienestar'
+
+    def __str__(self):
+        nombre = self.usuario.username if self.usuario else '(anónimo)'
+        dur    = f' ({self.duracion_segundos}s)' if self.duracion_segundos else ''
+        return f"{nombre} — {self.get_herramienta_display()}{dur} · {self.fecha:%d/%m/%Y %H:%M}"
 
 
 class Notificacion(models.Model):

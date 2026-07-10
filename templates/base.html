@@ -146,8 +146,10 @@
       display: flex;
       flex-direction: column;
     }
-    body.has-sidebar .main-wrapper {
-      margin-left: var(--sidebar-w);
+    @media (min-width: 769px) {
+      body.has-sidebar .main-wrapper {
+        margin-left: var(--sidebar-w);
+      }
     }
 
     /* Mobile topbar */
@@ -349,6 +351,21 @@
             <i class="bi bi-file-text"></i> Términos
           </a>
         </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:gestionar_especialidades' %}" class="sidebar-nav-link">
+            <i class="bi bi-tag"></i> Especialidades
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:log_sesiones' %}" class="sidebar-nav-link">
+            <i class="bi bi-person-check"></i> Inicios de sesión
+          </a>
+        </li>
+        <li class="sidebar-nav-item">
+          <a href="{% url 'cuentas:log_bienestar' %}" class="sidebar-nav-link">
+            <i class="bi bi-heart-pulse"></i> Uso de bienestar
+          </a>
+        </li>
 
       {% elif user.es_especialista %}
         <li class="sidebar-nav-item">
@@ -440,15 +457,15 @@
 <!-- ══ Contenido principal ════════════════════════════════════════ -->
 <div class="main-wrapper">
 
+  {% if user.is_authenticated %}
   <header class="mobile-topbar">
     <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menú">
       <i class="bi bi-list"></i>
     </button>
     <span class="mobile-topbar-brand">PsicoApp</span>
-    {% if user.is_authenticated %}
-      <span class="badge bg-light text-secondary border" style="font-size:.68rem;">{{ user.get_rol_display }}</span>
-    {% endif %}
+    <span class="badge bg-light text-secondary border" style="font-size:.68rem;">{{ user.get_rol_display }}</span>
   </header>
+  {% endif %}
 
   {% if messages %}
   <div class="main-messages">
@@ -495,6 +512,18 @@
     audio.addEventListener('canplay',function h(){audio.removeEventListener('canplay',h);if(s>0){try{audio.currentTime=s;}catch{}}if(ap)audio.play().catch(()=>{});ui();});
   }
   btnPlay.addEventListener('click',function(){if(!pistas.length)return;if(audio.paused){if(!audio.src)lt(idx,0,true);else audio.play().catch(()=>{});}else audio.pause();ui();ss();});
+  // HU-038: log primer play de música por sesión
+  let _musicLogged=false;
+  btnPlay.addEventListener('click',function(){
+    if(_musicLogged||!pistas.length)return;
+    setTimeout(function(){
+      if(!audio.paused){
+        _musicLogged=true;
+        var tok=(document.cookie.match(/csrftoken=([^;]+)/)||[])[1]||'';
+        fetch('{% url "cuentas:log_bienestar_uso" %}',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':tok},body:JSON.stringify({herramienta:'musica'})}).catch(function(){});
+      }
+    },400);
+  });
   btnPrev.addEventListener('click',function(){if(!pistas.length)return;lt(idx-1,0,!audio.paused);ss();});
   btnNext.addEventListener('click',function(){if(!pistas.length)return;lt(idx+1,0,!audio.paused);ss();});
   audio.addEventListener('ended',function(){lt(idx+1,0,true);});

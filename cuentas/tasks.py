@@ -1,7 +1,6 @@
 # HU-027: Tarea de envío de recordatorios diarios por correo electrónico
 import logging
 from datetime import date
-
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
